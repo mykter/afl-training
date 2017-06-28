@@ -1,0 +1,9 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE pov SYSTEM "/usr/share/cgc-docs/replay.dtd">
+<pov>
+    <cbid>CROMU_00007</cbid>
+    <replay>
+        <write><data>query-week`employee_id-100`\x0a\x0a</data></write>
+        <read><delim>\x0a</delim><match><data>Exiting</data></match></read>
+    </replay>
+</pov>

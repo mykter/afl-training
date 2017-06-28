@@ -1,0 +1,7 @@
+employee_id-1`employee_name-William Riker`wage-75`exempt-yes`
+employee_id-1`week-1`monday-24h59m`tuesday-24h59m`wednesday-24h59m`thursday-24h59m`friday-24h59m`saturday-5h0m`sunday-3h32m`
+employee_id-2`employee_name-Michael Macnair`wage-5`exempt-no`
+employee_id-2`week-1`monday-4h59m`tuesday-4h00m`wednesday-2h39m`thursday-4h59m`friday-20h59m`
+query-week`employee_id-1`week-1`
+query-week_all`week-1`
+
