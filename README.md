@@ -4,12 +4,11 @@ This repository contains:
 
 See the other READMEs for more information.
 
-Recommended challenge order:
+Recommended challenge order (flexible!):
 - sendmail/1301
 - heartbleed
+- date
 - cyber-grand-challenge
 - sendmail/1305
 
-Some of the challenges have HINTS and ANSWERS files - these contain
-useful information about fuzzing different targets even if you're
-not going to attempt the challenge.
+The challenges have HINTS and ANSWERS files - these contain useful information about fuzzing different targets even if you're not going to attempt the challenge.
