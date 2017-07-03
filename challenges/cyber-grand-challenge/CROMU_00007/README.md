@@ -14,4 +14,4 @@ Definitely one for multicore; persistent mode; and use of a dictionary (or a sta
 An interesting one to put into afl-analyse to see what it notices about the file format - it correctly annotates much of it, but misses on a few.
 
 
-* unless I introduced more in porting to Linux
+\* unless I introduced more in porting to Linux
