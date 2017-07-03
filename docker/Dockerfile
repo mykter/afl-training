@@ -24,19 +24,25 @@ RUN useradd --create-home --shell /bin/bash fuzzer
 COPY password.txt .
 RUN echo "fuzzer:`cat password.txt`" | chpasswd && rm password.txt
 
-# AFL
+# AFL + Deps
 ##############
 USER root
 RUN apt-get update && apt-get install -y clang llvm-dev git build-essential curl vim nano libssl-dev screen cgroup-bin sudo
-# You could add gnuplot-nox to this, but it increases the image size a lot (~100 extra packages).
+RUN update-alternatives --install /usr/bin/clang clang `which clang-3.8` 1
+RUN update-alternatives --install /usr/bin/clang++ clang++ `which clang++-3.8` 1
+RUN update-alternatives --install /usr/bin/llvm-config llvm-config `which llvm-config-3.8` 1
+RUN update-alternatives --install /usr/bin/llvm-symbolizer llvm-symbolizer `which llvm-symbolizer-3.8` 1
+
+RUN curl http://lcamtuf.coredump.cx/afl/releases/afl-latest.tgz | tar xz
+
+# You could install gnuplot-nox, but it increases the image size a lot (~100 extra packages).
 # Students can install it themselves if they want it.
 
 # Exercises
 ##############
 USER fuzzer
 WORKDIR /home/fuzzer
-RUN curl http://lcamtuf.coredump.cx/afl/releases/afl-latest.tgz | tar xz
-#RUN git clone https://github.com/ThalesIgnite/afl-training.git
+RUN git clone https://github.com/ThalesIgnite/afl-training.git
 # Use this if building using a local copy of the training materials
 # ADD afl-training ./afl-training
 # USER root
