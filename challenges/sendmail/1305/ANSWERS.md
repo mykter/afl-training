@@ -19,4 +19,4 @@ This is the output from running afl-tmin on the example crashing input from abov
 	000000000000000000000000000000000000000000000\�\�\�\�\�\�\�\�\�\�\�\�\�\�\�\�\�\�\�\�\�
 As you can see, this is markedly simpler than the original demo - debugging a crash with this input would likely be a lot easier.
 
-Vulnerability source: https://samate.nist.gov/SRD/view_testcase.php?tID=1305
+Vulnerability source: CVE-2003-0161, https://samate.nist.gov/SRD/view_testcase.php?tID=1305

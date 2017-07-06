@@ -15,4 +15,4 @@ Try taking a look at the source code or running the program under gdb to see why
 
 If you put some of your crashing inputs through afl-tmin, do you get the same input as above each time? If you don't, it means that afl-tmin couldn't shrink the inputs any further without leading to a crash, yet they are still different - to understand why you'll have to turn to the source.
 
-Vulnerability source: https://samate.nist.gov/SRD/view_testcase.php?tID=1301
+Vulnerability source: CVE-1999-0206, https://samate.nist.gov/SRD/view_testcase.php?tID=1301
