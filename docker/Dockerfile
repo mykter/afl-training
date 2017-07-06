@@ -33,6 +33,8 @@ RUN update-alternatives --install /usr/bin/clang++ clang++ `which clang++-3.8` 1
 RUN update-alternatives --install /usr/bin/llvm-config llvm-config `which llvm-config-3.8` 1
 RUN update-alternatives --install /usr/bin/llvm-symbolizer llvm-symbolizer `which llvm-symbolizer-3.8` 1
 
+USER fuzzer
+WORKDIR /home/fuzzer
 RUN curl http://lcamtuf.coredump.cx/afl/releases/afl-latest.tgz | tar xz
 
 # You could install gnuplot-nox, but it increases the image size a lot (~100 extra packages).

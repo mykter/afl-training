@@ -14,10 +14,11 @@ To run it locally:
 To run multiple instances on Amazon:
 
 - For a new Virtual Private Cloud:
-    - Create a new VPC
-    - Create a new subnet for it in availability zone A
-    - Create a new internet gateway for it
-    - Add a route to 0.0.0.0/0 via the new internet gateway
+    - Create a new VPC using the wizard - add a public subnet in availability zone A
+    - If adding a VPC witohut the wizard:
+        - Create a new subnet for it in availability zone A
+        - Create a new internet gateway for it
+        - Add a route to 0.0.0.0/0 via the new internet gateway
     - Optionally add flow logging for the VPC
 - Create a `~/.aws/credentials` file:
 
@@ -50,7 +51,6 @@ To run multiple instances on Amazon:
         $ docker-machine scp -r afl-training trainingaws:
         $ docker-machine ssh trainingaws
         $ cp afl-training/docker/Dockerfile ./
-        $ vim Dockerfile # swap out the final few commands as per the comments in the file
         $ sudo docker build -t afltraining .
 
 Then:
