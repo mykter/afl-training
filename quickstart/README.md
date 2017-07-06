@@ -2,11 +2,11 @@ These instructions lead you through setting up a Linux machine
 (the instructions assume Ubuntu) to use afl to fuzz the sample
 program.
 
-1) Setup
+Setup
 ========
 
-Jump to the appropriate part of section 1 based on what you're
-configuring, then go to section 2.
+Jump to the appropriate part of this Setup section based on what you're
+configuring, then go to the next section (Once you're at a shell...).
 
 Setting up your own machine manually
 ---------------------------------------
@@ -45,7 +45,7 @@ Logging in to the provided instance
 
 If you're reading these instructions then you've probably already made it!
 
-2) Once you're at a shell in your configured machine/container
+Once you're at a shell in your configured machine/container
 ==============================================================
 
 Build afl:
