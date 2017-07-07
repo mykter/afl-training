@@ -33,6 +33,13 @@ RUN update-alternatives --install /usr/bin/clang++ clang++ `which clang++-3.8` 1
 RUN update-alternatives --install /usr/bin/llvm-config llvm-config `which llvm-config-3.8` 1
 RUN update-alternatives --install /usr/bin/llvm-symbolizer llvm-symbolizer `which llvm-symbolizer-3.8` 1
 
+# For the date exercise:
+RUN apt-get install autopoint bison gperf autoconf
+
+RUN usermod -aG sudo fuzzer
+COPY password.txt .
+RUN echo "fuzzer:`cat password.txt`" | chpasswd && rm password.txt
+
 USER fuzzer
 WORKDIR /home/fuzzer
 RUN curl http://lcamtuf.coredump.cx/afl/releases/afl-latest.tgz | tar xz
