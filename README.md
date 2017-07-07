@@ -39,7 +39,7 @@ TODO
 - The afl docs/ directory
 - Ben Nagy’s “Finding Bugs in OS X using AFL” [video](https://vimeo.com/129701495)
 - The [afl-users mailing list](https://groups.google.com/forum/#!forum/afl-users)
-- The smart fuzzer revolution (talk on the future of fuzzing): video / slides
+- The smart fuzzer revolution (talk on the future of fuzzing): [video](https://www.youtube.com/watch?v=g1E2Ce5cBhI) / [slides](https://docs.google.com/presentation/d/1FgcMRv_pwgOh1yL5y4GFsl1ozFwd6PMNGlMi2ONkGec/edit#slide=id.g13a9c1bce4_6_0)
 - [libFuzzer](http://llvm.org/docs/LibFuzzer.html)
     - [libFuzzer workshop](https://github.com/Dor1s/libfuzzer-workshop)
     - [libFuzzer tutorial](https://github.com/google/fuzzer-test-suite/blob/master/tutorial/libFuzzerTutorial.md)
