@@ -1,5 +1,5 @@
 # Fuzzing with AFL workshop
-Materials of the "Fuzzing with AFL" workshop.
+Materials of the "Fuzzing with AFL" workshop by Michael Macnair (@michael_macnair).
 
 The first public version of this workshop was presented at [SteelCon 2017](https://www.steelcon.info/the-event/workshops/#FWA).
 
@@ -32,7 +32,7 @@ All of the challenges use real vulnerabilities from open source projects (the CV
 
 # Slides
 
-TODO
+Published via [Google docs](https://docs.google.com/presentation/d/1lTVDDGCCOU6Fbm5JAfxO963LSVvrCWnbv0TBZP5Ka0o/pub?start=false&loop=false&delayms=30000). There is extra information in the speaker notes (Options / Open speaker notes)
 
 # Links
 
