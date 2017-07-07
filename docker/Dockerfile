@@ -34,11 +34,10 @@ RUN update-alternatives --install /usr/bin/llvm-config llvm-config `which llvm-c
 RUN update-alternatives --install /usr/bin/llvm-symbolizer llvm-symbolizer `which llvm-symbolizer-3.8` 1
 
 # For the date exercise:
-RUN apt-get install autopoint bison gperf autoconf
+RUN apt-get install autopoint bison gperf autoconf texinfo gettext
 
+# For sudo for ASAN:
 RUN usermod -aG sudo fuzzer
-COPY password.txt .
-RUN echo "fuzzer:`cat password.txt`" | chpasswd && rm password.txt
 
 USER fuzzer
 WORKDIR /home/fuzzer
