@@ -1,17 +1,26 @@
 This Dockerfile produces a docker image set up ready for the training.
 
-To build it:
+
+Building
+========
 
     $ echo <this session's password> > password.txt
     $ docker build . -t afltraining
 (note that the password is included in the image - don't publically publish the image with a password you're using for a live training session!)
 
-To run it locally (note you need privileged containers to use the `asan_cgroups/limit_memory.sh` script):
+Running Locally
+===============
 
     $ docker run --privileged -p 22000:22 afltraining
     $ ssh fuzzer@localhost -p 22000
 
-To run multiple instances on Amazon:
+You need to use a privileged container to use the `asan_cgroups/limit_memory.sh` script.
+
+Running on AWS
+==============
+
+Set up AWS host
+---------------
 
 - For a new Virtual Private Cloud:
     - Create a new VPC using the wizard - add a public subnet in availability zone A
@@ -33,6 +42,10 @@ To run multiple instances on Amazon:
         $ docker-machine ssh trainingaws
         $ echo core | sudo tee /proc/sys/kernel/core_pattern
         $ echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+
+Get the image on the host
+-------------------------
+
 - Either save the image, transfer it, and load it:
     - Save the image:
 
@@ -53,7 +66,8 @@ To run multiple instances on Amazon:
         $ cp afl-training/docker/Dockerfile ./
         $ sudo docker build -t afltraining .
 
-Then:
+Run instances
+-------------
 
 - Spin up some instances (assumes you've installed docker-machine bash wrapper). Note you need privileged containers to use the `asan_cgroups/limit_memory.sh` script.
 
@@ -62,6 +76,9 @@ Then:
         $ for PORT in {30500..305NN}; do docker run --privileged -d -p $PORT:22 afltraining ; done
 - In the EC2 control panel, check that the docker-machine security group for this VPC has open inbound ports from 30500-305NN
 
-- Don't forget to destroy the machine when you're finished:
+Cleanup
+-------
+
+Don't forget to destroy the machine when you're finished:
 
         $ docker-machine rm trainingaws

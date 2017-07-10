@@ -1,12 +1,20 @@
-These instructions lead you through setting up a Linux machine
-(the instructions assume Ubuntu) to use afl to fuzz the sample
-program.
+These instructions lead you through setup and fuzzing of a sample program.
 
 Setup
 ========
 
 Jump to the appropriate part of this Setup section based on what you're
-configuring, then go to the next section (Once you're at a shell...).
+configuring, then go to the next section (Building AFL).
+
+Logging in to the provided instance
+-------------------------------------
+
+If you're reading these instructions then you've probably already made it! Skip to the Building AFL section.
+
+Running the docker image locally
+-----------------------------------
+
+See the "Running locally" section of docker/README.md
 
 Setting up your own machine manually
 ---------------------------------------
@@ -32,33 +40,22 @@ Get afl:
     $ wget http://lcamtuf.coredump.cx/afl/releases/afl-latest.tgz
     $ tar xvf afl-latest.tgz
 
-Running the docker image locally
------------------------------------
+Building AFL
+============
 
-From the root of this repository:
-
-    $ docker build -t afltraining .
-    $ docker run -it afltraining /bin/bash
-
-Logging in to the provided instance
--------------------------------------
-
-If you're reading these instructions then you've probably already made it!
-
-Once you're at a shell in your configured machine/container
-==============================================================
-
-Build afl:
-
-    $ cd afl-2.41b   # or whatever it is now
+    $ cd afl-2.45b   # or whatever it is now
     $ make
     $ cd llvm_mode
     $ make
 
-Build our quickstart program:
 
-    $ cd /path/to/quickstart
-    $ CC=~/afl-2.41b/afl-clang-fast AFL_HARDEN=1 make
+The `vulnerable` program
+========================
+
+Build our quickstart program using the instrumented compiler:
+
+    $ cd /path/to/quickstart # (e.g. ~/afl-training/quickstart)
+    $ CC=~/afl-2.45b/afl-clang-fast AFL_HARDEN=1 make
 
 Test it:
 
@@ -67,12 +64,16 @@ Test it:
     $ ./vulnerable < inputs/c
     ...
 
+
+Fuzzing
+=======
+
 Fuzz it:
 
-    $ ~/afl-2.41b/afl-fuzz -i inputs -o out ./vulnerable
+    $ ~/afl-2.45b/afl-fuzz -i inputs -o out ./vulnerable
 
 For comparison you could also test without the provided example inputs, e.g.:
 
     $ mkdir in
     $ echo "my seed" > in/a
-    $ ~/afl-2.41b/afl-fuzz -i in -o out ./vulnerable
+    $ ~/afl-2.45b/afl-fuzz -i in -o out ./vulnerable
