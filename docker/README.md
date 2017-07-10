@@ -6,9 +6,9 @@ To build it:
     $ docker build . -t afltraining
 (note that the password is included in the image - don't publically publish the image with a password you're using for a live training session!)
 
-To run it locally:
+To run it locally (note you need privileged containers to use the `asan_cgroups/limit_memory.sh` script):
 
-    $ docker run -p 22000:22 afltraining
+    $ docker run --privileged -p 22000:22 afltraining
     $ ssh fuzzer@localhost -p 22000
 
 To run multiple instances on Amazon:
@@ -55,11 +55,11 @@ To run multiple instances on Amazon:
 
 Then:
 
-- Spin up some instances (assumes you've installed docker-machine bash wrapper):
+- Spin up some instances (assumes you've installed docker-machine bash wrapper). Note you need privileged containers to use the `asan_cgroups/limit_memory.sh` script.
 
         $ docker-machine use trainingaws
         $ docker-machine ip trainingaws
-        $ for PORT in {30500..305NN}; do docker run -d -p $PORT:22 afltraining ; done
+        $ for PORT in {30500..305NN}; do docker run --privileged -d -p $PORT:22 afltraining ; done
 - In the EC2 control panel, check that the docker-machine security group for this VPC has open inbound ports from 30500-305NN
 
 - Don't forget to destroy the machine when you're finished:

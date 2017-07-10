@@ -34,7 +34,7 @@ RUN update-alternatives --install /usr/bin/llvm-config llvm-config `which llvm-c
 RUN update-alternatives --install /usr/bin/llvm-symbolizer llvm-symbolizer `which llvm-symbolizer-3.8` 1
 
 # For the date exercise:
-RUN apt-get install autopoint bison gperf autoconf texinfo gettext
+RUN apt-get install -y autopoint bison gperf autoconf texinfo gettext
 
 # For sudo for ASAN:
 RUN usermod -aG sudo fuzzer
