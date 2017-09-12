@@ -28,7 +28,7 @@ Challenges, roughly in recommended order, with any specific aspects they cover:
 
 The challenges have HINTS.md and ANSWERS.md files - these contain useful information about fuzzing different targets even if you're not going to attempt the challenge.
 
-All of the challenges use real vulnerabilities from open source projects (the CVEs are identified in the descriptions), with the exception of the Cyber Grand Challenge extract, which is a synthtetic vulnerability.
+All of the challenges use real vulnerabilities from open source projects (the CVEs are identified in the descriptions), with the exception of the Cyber Grand Challenge extract, which is a synthetic vulnerability.
 
 # Slides
 
