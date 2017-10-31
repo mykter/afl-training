@@ -19,7 +19,7 @@ Here's an example ntpqmain() replacement that uses deferred forkserver and persi
                     read(0, &datatype, 1);
                     read(0, &status, 1);
                     length = read(0, data, 1024 * 16);
-                    cookedprint(datatype, length, data, status, FALSE, stdout);
+                    cookedprint(datatype, length, data, status, stdout);
     #ifdef __AFL_HAVE_MANUAL_CONTROL
             }
     #endif
