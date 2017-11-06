@@ -14,7 +14,7 @@ If you're reading these instructions then you've probably already made it! Skip 
 Running the docker image locally
 -----------------------------------
 
-See the "Running locally" section of docker/README.md
+See the "Running locally" section of docker/README.md, then skip to the Building AFL section.
 
 Setting up your own machine manually
 ---------------------------------------
@@ -43,10 +43,9 @@ Get afl:
 Building AFL
 ============
 
-    $ cd afl-2.45b   # or whatever it is now
+    $ cd afl-2.45b   # replace with whatever the current version is
     $ make
-    $ cd llvm_mode
-    $ make
+    $ make -C llvm_mode
 
 
 The `vulnerable` program
@@ -60,9 +59,9 @@ Build our quickstart program using the instrumented compiler:
 Test it:
 
     $ ./vulnerable
-    # type some input, e.g. "ececho!"
+    # Press enter to get usage instructions.
+    # Test it on one of the provided inputs:
     $ ./vulnerable < inputs/c
-    ...
 
 
 Fuzzing

@@ -1,4 +1,5 @@
-CFLAGS ?= -g
+# Enable debugging and suppress pesky warnings
+CFLAGS ?= -g -w
 
 all:	vulnerable
 

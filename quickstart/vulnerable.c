@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-int main()
+int main(int argc, char *argv[])
 {
 	char input[100] = {0};
 	char *out;
@@ -30,10 +30,15 @@ int main()
 		} else {
 			fprintf(stderr, "head input was too small\n");
 		}
-	} else if (strcmp(input, "surprise!") == 0) {
+	} else if (strcmp(input, "surprise!\n") == 0) {
 		// easter egg!
 		*(char *)1=2;
 	} else {
-		fprintf(stderr, "Tell me what to doooo!\n");
+		fprintf(stderr, "Usage: %s\nText utility - accepts commands on stdin and prints results to stdout:\n", argv[0]);
+		fprintf(stderr, "\tInput           | Output\n");
+		fprintf(stderr, "\t----------------+-----------------------\n");
+		fprintf(stderr, "\tec<string>      | <string> (simple echo)\n");
+		fprintf(stderr, "\thead<N><string> | The first <N> bytes of <string>\n");
+		fprintf(stderr, "\tc<string>       | The length of <string>, followed by <string>\n");
 	}
 }
