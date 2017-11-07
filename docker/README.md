@@ -24,7 +24,7 @@ Set up AWS host
 
 - For a new Virtual Private Cloud:
     - Create a new VPC using the wizard - add a public subnet in availability zone A
-    - If adding a VPC witohut the wizard:
+    - If adding a VPC without the wizard:
         - Create a new subnet for it in availability zone A
         - Create a new internet gateway for it
         - Add a route to 0.0.0.0/0 via the new internet gateway
