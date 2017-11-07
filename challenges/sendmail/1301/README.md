@@ -6,8 +6,8 @@ The program already comes with a test harness around it (in `main.c`), that runs
 
 To test it out:
 
-    echo "hi!" > input
     make
+    echo "hi!" > input
     ./m1-bad input
 
 You can see from the output (or the source) that the code has been fairly extensively instrumented with debug prints to watch out for a buffer overflow. Fortunately we don't need to worry about this: afl is going to find the problems for us.
@@ -19,3 +19,5 @@ For persistent mode read afl's docs/llvm_mode/README (under Bonus features)
 For multicore read afl's docs/parallel_fuzzing.txt for fairly straightforward instructions on single-system fuzzing. Get a master and 3 slaves running to slash the time it takes to solve this challenge.
 
 For hints on fuzzing, see HINTS. If you get your fuzzer running without needing the hints, read the HINTS file whilst watching the UI for some dicussion on seed file selection. Also check out docs/status_screen.txt.
+
+Warning: this challenge doesn't play nicely with ASAN. Save ASAN for another challenge like heartbleed.
