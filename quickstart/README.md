@@ -21,14 +21,14 @@ Setting up your own machine manually
 
 Install dependencies:
 
-    $ sudo apt-get install clang-3.8 build-essential llvm-3.8-dev gnuplot-nox
+    $ sudo apt-get install clang-4.0 build-essential llvm-4.0-dev gnuplot-nox
 
 Work around some Ubuntu annoyances
 
-    $ sudo update-alternatives --install /usr/bin/clang clang `which clang-3.8` 1
-    $ sudo update-alternatives --install /usr/bin/clang++ clang++ `which clang++-3.8` 1
-    $ sudo update-alternatives --install /usr/bin/llvm-config llvm-config `which llvm-config-3.8` 1
-    $ sudo update-alternatives --install /usr/bin/llvm-symbolizer llvm-symbolizer `which llvm-symbolizer-3.8` 1
+    $ sudo update-alternatives --install /usr/bin/clang clang `which clang-4.0` 1
+    $ sudo update-alternatives --install /usr/bin/clang++ clang++ `which clang++-4.0` 1
+    $ sudo update-alternatives --install /usr/bin/llvm-config llvm-config `which llvm-config-4.0` 1
+    $ sudo update-alternatives --install /usr/bin/llvm-symbolizer llvm-symbolizer `which llvm-symbolizer-4.0` 1
 
 Make system not interfere with crash detection:
 
@@ -76,3 +76,12 @@ For comparison you could also test without the provided example inputs, e.g.:
     $ mkdir in
     $ echo "my seed" > in/a
     $ ~/afl-2.45b/afl-fuzz -i in -o out ./vulnerable
+
+POC
+====
+
+Without instrumentation (`-n`): (`afl-fuzz -i inputs -o out -n ./vulnerable`)
+![imaing](https://github.com/enovella/afl-training/blob/master/quickstart/pics/afl-pic-vulnerable-dumbf.png)
+
+With instrumentation (`afl-clang-fast`):
+![imaing](https://github.com/enovella/afl-training/blob/master/quickstart/pics/afl-pic-vulnerable.png)
