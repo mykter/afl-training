@@ -69,7 +69,7 @@ Fuzzing
 
 Fuzz it:
 
-    $ ~/afl-2.45b/afl-fuzz -i inputs -o out ./vulnerable
+    $ ~/afl-2.45b/afl-fuzz -i in -o out ./vulnerable
 
 For comparison you could also test without the provided example inputs, e.g.:
 
