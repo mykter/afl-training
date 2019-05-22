@@ -7,7 +7,7 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 ##############
 USER root
 RUN apt-get update && apt-get install -y \
-    emacs vim nano screen \
+    emacs vim nano screen htop \
     clang-6.0 llvm-6.0-dev git build-essential curl libssl-dev cgroup-bin sudo \
     autopoint bison gperf autoconf texinfo gettext \
     awscli jq openssh-server
@@ -17,8 +17,9 @@ RUN apt-get update && apt-get install -y \
 RUN useradd --create-home --shell /bin/bash fuzzer
 # See the README - the password is set by the entry script
 
-# sudo access for ASAN and installing extra tools:
-RUN usermod -aG sudo fuzzer
+# passwordless sudo access for ASAN and installing extra tools:
+RUN echo "fuzzer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+# RUN usermod -aG sudo fuzzer
 
 RUN mkdir /var/run/sshd
 
@@ -58,7 +59,7 @@ RUN git clone https://github.com/ThalesIgnite/afl-training.git workshop
 # USER root
 # RUN chown -R fuzzer:fuzzer afl-training
 
-# By default just run an SSH daemon. To run locally instead, use something like this:
+# By default run an SSH daemon. To run locally instead, use something like this:
 #    docker run -it --user fuzzer afl-training:latest /bin/bash
 ##############
 USER root
