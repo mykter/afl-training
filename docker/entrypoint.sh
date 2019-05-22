@@ -9,7 +9,7 @@ if [[ "$PASSMETHOD" == "env" ]]; then
     fi
     echo "Password set from environment variable"
 elif [[ "$PASSMETHOD" == "awsssm" ]]; then
-    if [[ -z $PASSPARAM -o -z $PASSREGION ]]; then
+    if [[ -z $PASSPARAM || -z $PASSREGION ]]; then
         echo "awsssm password method specified, but missing PASSPARAM or PASSREGION environment variable" >&2
         exit 1
     fi
