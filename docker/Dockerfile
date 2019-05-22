@@ -41,10 +41,7 @@ RUN git clone https://github.com/vanhauser-thc/afl-patches.git && \
     patch -p0 <./afl-patches/afl-llvm-fix2.diff && \
     patch -p0 <./afl-patches/afl-sort-all_uniq-fix.diff
 RUN make && cd llvm_mode && make
-
-# It's important that AFL comes last in the PATH, as otherwise its `as` overrides the system one
-RUN echo PATH=$PATH:$HOME/$AFLVERSION >> ~/.bashrc && \
-    echo AFL_PATH=$HOME/$AFLVERSION/ >> ~/.bashrc
+RUN sudo make install
 
 # You could install gnuplot-nox, but it increases the image size a lot (~100 extra packages).
 # Students can install it themselves if they want it.
