@@ -4,14 +4,12 @@ This Dockerfile produces a docker image set up ready for the training.
 Building
 ========
 
-    $ echo <this session's password> > password.txt
     $ docker build . -t afltraining
-(note that the password is included in the image - don't publically publish the image with a password you're using for a live training session!)
 
 Running Locally
 ===============
 
-    $ docker run --privileged -p 22000:22 afltraining
+    $ docker run --privileged -p 22000:22 -e PASSMETHOD=env -e PASS=<password> afltraining
     $ ssh fuzzer@localhost -p 22000
 
 You need to use a privileged container to use the `asan_cgroups/limit_memory.sh` script.
