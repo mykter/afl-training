@@ -1,1 +1,1 @@
-head This string is going to be truncated at the 0x20'th position.
+head 20 This string is going to be truncated at the 20th position.
