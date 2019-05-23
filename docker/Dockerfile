@@ -7,10 +7,11 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 ##############
 USER root
 RUN apt-get update && apt-get install -y \
-    emacs vim nano screen htop \
     clang-6.0 llvm-6.0-dev git build-essential curl libssl-dev cgroup-bin sudo \
     autopoint bison gperf autoconf texinfo gettext \
-    awscli jq openssh-server
+    emacs vim nano screen htop \
+    awscli jq openssh-server \
+    lldb gdb
 
 # Users & SSH
 ##############
@@ -52,9 +53,9 @@ USER fuzzer
 WORKDIR /home/fuzzer
 RUN git clone https://github.com/ThalesIgnite/afl-training.git workshop
 # Use this if building using a local copy of the training materials
-# ADD afl-training ./afl-training
+# ADD . ./local-workshop
 # USER root
-# RUN chown -R fuzzer:fuzzer afl-training
+# RUN chown -R fuzzer:fuzzer local-workshop
 
 # By default run an SSH daemon. To run locally instead, use something like this:
 #    docker run -it --user fuzzer afl-training:latest /bin/bash
