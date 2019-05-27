@@ -73,7 +73,7 @@ SSH in:
 
         $ ssh fuzzer@`docker-machine ip trainingaws` -p $BASE
 
-For max performance, and when doing multi-core fuzzing, we have to manually specify which CPUs to bind to, because AFL can't tell which ones it has access to. In this example, we're on an instance that has access to CPU 4 as indicated in its hostname, set by the above docker run command. The entrypoint script has also already set AFL_NO_AFFINITY in the environment for us.
+For max performance, and when doing multi-core fuzzing, we have to manually specify which CPUs to bind to, because AFL can't tell which ones it has access to. In this example, we're on an instance that has access to CPU 4 as indicated in its hostname, set by the above docker run command. The entrypoint script has also already set AFL_NO_AFFINITY in the environment for us. I learned this technique from Brandon Falk's excellent post on [scaling AFL to 256 threads](https://gamozolabs.github.io/fuzzing/2018/09/16/scaling_afl.html).
 
         $ taskset -c 4 afl-fuzz -i inputs -o out ./vulnerable
 
