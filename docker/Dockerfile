@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     clang-6.0 llvm-6.0-dev git build-essential curl libssl-dev cgroup-bin sudo \
     autopoint bison gperf autoconf texinfo gettext \
     emacs vim nano screen htop \
-    awscli jq openssh-server \
+    awscli openssh-server man \
     lldb gdb
 
 # Users & SSH
@@ -51,7 +51,7 @@ RUN sudo make install
 ##############
 USER fuzzer
 WORKDIR /home/fuzzer
-RUN git clone https://github.com/ThalesIgnite/afl-training.git workshop
+RUN git clone https://github.com/mykter/afl-training.git workshop
 # Use this if building using a local copy of the training materials
 # ADD . ./local-workshop
 # USER root
