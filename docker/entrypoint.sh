@@ -14,7 +14,7 @@ elif [[ "$PASSMETHOD" == "awsssm" ]]; then
         exit 1
     fi
     echo "Getting password from parameter $PASSPARAM"
-    PASS=$(aws ssm get-parameter --name $PASSPARAM --with-decryption --region $PASSREGION --query '.Parameter.Value' --output text)
+    PASS=$(aws ssm get-parameter --name $PASSPARAM --with-decryption --region $PASSREGION --query 'Parameter.Value' --output text)
 else
     echo "You must specify a method for setting the fuzzer user's password, or use a different entrypoint." >&2
     echo "set the PASSMETHOD environment variable to 'env' or 'awsssm'" >&2

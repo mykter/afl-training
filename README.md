@@ -20,9 +20,9 @@ See the other READMEs for more information.
 # Challenges
 
 Challenges, roughly in recommended order, with any specific aspects they cover:
-- libxml2 - test-harness creation for an ideal target
+- libxml2 - an ideal target, using ASAN and persistent mode.
 - sendmail/1301 - parallel fuzzing
-- heartbleed - fuzzing with ASAN
+- heartbleed - infamous bug, using ASAN.
 - date - fuzzing environment variable input
 - ntpq - fuzzing a network client; coverage analysis and increasing coverage
 - cyber-grand-challenge - an easy vuln and an example of a hard to find vuln using afl

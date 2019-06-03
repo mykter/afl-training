@@ -1,4 +1,4 @@
-This Dockerfile produces a docker image set up ready for the training.
+This Dockerfile produces a docker image set up ready for the training. It is available on the Docker Hub as [mykter/afl-training](http://hub.docker.com/r/mykter/afl-training).
 
 
 Building
@@ -65,7 +65,7 @@ Spin up some instances.
               docker run \
                   --cpuset-cpus=$MANUALCPUS -e MANUALCPUS -h "cpus-$MANUALCPUS" \
                   --privileged -d -p $((BASEPORT + I)):22 \
-                  -e PASSMETHOD=awsssm -e PASSPARAM=<e.g. awstraining.password> -e PASSREGION=<e.g. eu-west-2> \
+                  -e PASSMETHOD=awsssm -e PASSPARAM=<e.g. afltraining.password> -e PASSREGION=<e.g. eu-west-2> \
                   mykter/afl-training
           done
 
