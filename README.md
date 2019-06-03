@@ -20,6 +20,7 @@ See the other READMEs for more information.
 # Challenges
 
 Challenges, roughly in recommended order, with any specific aspects they cover:
+- libxml2 - test-harness creation for an ideal target
 - sendmail/1301 - parallel fuzzing
 - heartbleed - fuzzing with ASAN
 - date - fuzzing environment variable input
@@ -30,6 +31,8 @@ Challenges, roughly in recommended order, with any specific aspects they cover:
 The challenges have HINTS.md and ANSWERS.md files - these contain useful information about fuzzing different targets even if you're not going to attempt the challenge.
 
 All of the challenges use real vulnerabilities from open source projects (the CVEs are identified in the descriptions), with the exception of the Cyber Grand Challenge extract, which is a synthetic vulnerability.
+
+The chosen bugs are all fairly well isolated, and (except where noted) are very amenable to fuzzing. This means that you should be able to discover the bugs with a relatively small amount of compute time - these won't take core-days, most of them will take core-minutes. That said, fuzz testing is be definition a random process, so there's no guarantee how long it will take to find a particular bug, just a probability distribution.
 
 # Slides
 

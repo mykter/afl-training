@@ -3,14 +3,25 @@ LABEL maintainer="Michael Macnair"
 
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
+# We want manpages in the container - the base image excludes them
+RUN rm /etc/dpkg/dpkg.cfg.d/excludes
+
 # Packages
 ##############
+# by line:
+#   build and afl
+#   date challenge
+#   libxml2 challenge
+#   server/entrypoint
+#   user tools
+#   debugging tools
 USER root
 RUN apt-get update && apt-get install -y \
     clang-6.0 llvm-6.0-dev git build-essential curl libssl-dev cgroup-bin sudo \
     autopoint bison gperf autoconf texinfo gettext \
-    emacs vim nano screen htop \
-    awscli openssh-server man \
+    libtool pkg-config python2.7-dev \
+    awscli openssh-server \
+    emacs vim nano screen htop man manpages-posix-dev \
     lldb gdb
 
 # Users & SSH
