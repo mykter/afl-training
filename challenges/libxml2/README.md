@@ -15,7 +15,7 @@ Build and test v2.9.2 with AFL and Address Sanitizer instrumentation by running:
     cd libxml2
     CC=afl-clang-fast ./autogen.sh
     AFL_USE_ASAN=1 make -j 4
-    ASAN_OPTIONS=detect_leaks=0 ./testModule    # leak detection doesn't work with the libxml2 test suite, for some reason
+    ASAN_OPTIONS=detect_leaks=0 ./testModule    # leak detection doesn't work in a container as it can't attach to the process
 ```
 Now we have a working instrumented build of the library, but no fuzzing harness to use.
 
@@ -25,4 +25,4 @@ If you're comfortable experimenting or confident in your approach, implement a h
 
 Once you've implemented a harness, you can compile it using a command like this:
 
-    afl-clang-fast ./harness.c -I libxml2/include libxml2/.libs/libxml2.a -lz -lm -o fuzzer
+    AFL_USE_ASAN=1 afl-clang-fast ./harness.c -I libxml2/include libxml2/.libs/libxml2.a -lz -lm -o fuzzer

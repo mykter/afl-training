@@ -7,7 +7,7 @@ Recall the type of program AFL can fuzz (from AFL's QuickStartGuide.txt):
     Find or write a reasonably fast and simple program that takes data from
     a file or stdin, processes it in a test-worthy way, then exits cleanly.
 
-We can wrap these two library functions in a little boiler-plate code to call xmlReadFile with a file specified as a commandline argument, and then free the resulting parsed document.
+We can wrap these two library functions in a little boiler-plate code to call xmlReadFile with a file specified as a commandline argument, and then free the resulting parsed document. As libxml can be compiled with clang and the API should be stateless, we can also include the AFL persistent-mode loop.
 
 Equivalently (looking at `parse3.c`), we could wrap `xmlReadMemory` with code that reads from stdin instead of a specified filename.
 
