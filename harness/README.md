@@ -1,4 +1,4 @@
-This small exercise is about writing a harness around a bit of code to allow it to be fuzzed with afl.
+This small exercise is about writing a harness around a bit of code to allow it to be fuzzed with afl. You won't find any bugs, but you will learn about the plumbing to interface AFL with a target bit of code.
 
 If you were comfortable with what was happening when fuzzing the `vulnerable` quickstart program, and understand how afl sends data to the target program, you can skip this and move on to the challenges.
 
@@ -32,7 +32,7 @@ To meet point 1 we need a `main()` function that calls the library. Here's an ex
 void main() {
 	char *data = "Some input data";
 	lib_echo(data, strlen(data));
-	printf("%d\n", lib_mul(1,2));
+	printf("\n%d\n", lib_mul(1,2));
 }
 ```
 
@@ -63,7 +63,7 @@ int main() {
 }
 ```
 
-After compiling this with the instrumenting compiler, running it under afl-fuzz should give better results - now the inputs it is sending to the program are actually having an impact on the execution flow, and it can discover inputs that lead to different paths.
+After compiling this with the instrumenting compiler, running it under afl-fuzz should give (marginally) better results - now the inputs it is sending to the program are actually having an impact on the execution flow, and it can discover inputs that lead to different paths. This is an incredibly simple program though, and the underlying printf call _isn't_ instrumented, so AFL won't find many paths.
 
 Arbitrary input formats
 -----------------------

@@ -28,7 +28,7 @@ ECS with Fargate
 ----------------
 Fargate has the advantage of being less effort to manage - there is no machine provisioning and each container gets a public IP. It also makes container escapes by marauding students less likely and less impactful, though this isn't too important.
 
-It has the limitation that your containers cannot be privileged, so are missing CAP_PTRACE for debugging and the necessary cgroup privileges for the ASAN script. It's still a viable option - ASAN usually works with `-m none`, and debugging is an optional extra part of the workshop.
+It has the limitation that your containers cannot be privileged, so are missing CAP_PTRACE for debugging and the necessary cgroup privileges for the ASAN script. It's still a viable option - ASAN usually works with `-m none` and `ASAN_OPTIONS=detect_leaks=0`, and debugging is not the focus of the workshop.
 
 These limitates aren't present when using ECS with EC2, but the networking limitations of ECS+EC2 outweigh the benefits in my opinion - it's easier to go down the DIY EC2 route.
 
