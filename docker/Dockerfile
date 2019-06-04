@@ -18,7 +18,7 @@ RUN rm /etc/dpkg/dpkg.cfg.d/excludes
 USER root
 RUN apt-get update && apt-get install -y \
     clang-6.0 llvm-6.0-dev git build-essential curl libssl-dev cgroup-bin sudo \
-    autopoint bison gperf autoconf texinfo gettext \
+    rsync autopoint bison gperf autoconf texinfo gettext \
     libtool pkg-config libz-dev python2.7-dev \
     awscli openssh-server \
     emacs vim nano screen htop man manpages-posix-dev \
