@@ -1,6 +1,6 @@
 An example way of getting data into sinbio, using stdin and some deferred forkserver goodness.
 
-Just insert this immediately prior to the BIO_write:
+Insert this immediately prior to the BIO_write:
 
     #ifdef __AFL_HAVE_MANUAL_CONTROL
       __AFL_INIT();
