@@ -1,7 +1,7 @@
 # Fuzzing with AFL workshop
 Materials of the "Fuzzing with AFL" workshop by Michael Macnair (@michael_macnair).
 
-The first public version of this workshop was presented at [SteelCon 2017](https://www.steelcon.info/the-event/workshops/#FWA).
+The first public version of this workshop was presented at SteelCon 2017 and it was revised for BSides London and Bristol 2019.
 
 # Pre-requisites
 - 3-4 hours (more to complete all the challenges)
@@ -36,7 +36,7 @@ The chosen bugs are all fairly well isolated, and (except where noted) are very 
 
 # Slides
 
-Via [Google docs](https://docs.google.com/presentation/d/1lTVDDGCCOU6Fbm5JAfxO963LSVvrCWnbv0TBZP5Ka0o/pub?start=false&loop=false&delayms=30000) or in [PowerPoint format](https://github.com/mykter/afl-training/files/3253433/Fuzzing.with.AFL.pptx). There is extra information in the speaker notes.
+Via [Google docs](https://docs.google.com/presentation/d/e/2PACX-1vT1wZA5KumUw5aInwQGv8bKJbXfvKz6DHXSBgfwluKwSRUReV8OyQU0yKRDh1QsvAjoHD2Uf2JD1qIW/pub?start=false&loop=false&delayms=60000) or in [PowerPoint format](https://github.com/mykter/afl-training/files/3253433/Fuzzing.with.AFL.pptx). There is extra information in the speaker notes.
 
 # Links
 
