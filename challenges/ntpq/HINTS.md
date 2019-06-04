@@ -6,7 +6,7 @@ Rather than trying to have afl's output simulate a remote ntpd, just replace the
 
 This is a common pattern in testing network programs - target functions such as parsers can often be easily tested in isolation.
 
-Compile with the classic `CC=/path/to/afl-clang-fast AFL_HARDEN=1 ./configure && make`
+Compile with the classic `CC=afl-clang-fast AFL_HARDEN=1 ./configure && make`
 
 
 ## Coverage

@@ -39,6 +39,6 @@ Without any help, afl won't easily find all of the different formats that can be
 
 In `varfmt` we notice it is checking strings against entries in an array called `cookedvars`. These can be easily extracted into a dictionary for afl to use. Whilst we're at it, let's grab `tstflagnames` too as they look like they might be useful. A dictionary with these keys in is included in this repo as `ntpq.dict`. Use it with the `-x` option to afl-fuzz, e.g.:
 
-    ~/afl-2.44b/afl-fuzz -i in -o out -x ntpq.dict ntp-4.2.8p8/ntpq/ntpq
+    afl-fuzz -i in -o out -x ntpq.dict ntp-4.2.8p8/ntpq/ntpq
 
-With the help of this dictionary you'll see the number of paths found shoot up. Some issues have been found in 4.2.8p10 using this approach that have been reported but not fixed at the time of writing - if in doubt, contact Michael or security@ntp.org.
+With the help of this dictionary you'll see the number of paths found shoot up. Some issues have been found in 4.2.8p10 using this approach that have been reported but not fixed at the time of writing - if in doubt, contact security@ntp.org.
