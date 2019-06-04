@@ -13,12 +13,12 @@ Equivalently (looking at `parse3.c`), we could wrap `xmlReadMemory` with code th
 
 Both of these approaches are good, but from here on we'll just look at the `xmlReadFile` option for simplicity.
 
-Once you've implemented the harness, compile it (refer back to README.md for the include & linker flags you need with libxml2), and then test your `fuzzer` executable by specifying an XML file on the commandline, e.g. `./fuzzer ./libxml2/regressions.xml`. There shouldn't be any visible result (unless you added some kind of output to your harness). We're now ready to fuzz in the usual manner for an ASAN-instrumented binary; here's a reminder of how to do it for the file-argument approach:
+Once you've implemented the harness, compile it (refer back to README.md for the include & linker flags you need with libxml2), and then test your `harness` executable by specifying an XML file on the commandline, e.g. `./harness ./libxml2/regressions.xml`. There shouldn't be any visible result (unless you added some kind of output to your harness). We're now ready to fuzz in the usual manner for an ASAN-instrumented binary; here's a reminder of how to do it for the file-argument approach:
 
 ```shell
     mkdir in
     echo "<hi></hi>" > in/hi.xml
-    afl-fuzz -m none -i in -o out ./fuzzer @@
+    afl-fuzz -m none -i in -o out ./harness @@
 ```
 
 Note we're using `-m none` - this is _probably_ safe in this instance, but there's always a chance the library will try and allocate a ridiculous amount of memory, which could cause system instability. See AFL's `notes_for_asan.txt` doc for more robust approaches, one of which is also covered in the hearbleed challenge.

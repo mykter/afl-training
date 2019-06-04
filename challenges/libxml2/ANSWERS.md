@@ -2,7 +2,7 @@ There are two options to help AFL out with fuzzing XML: using a good seed corpus
 
 Happily AFL ships with a ready made XML dictionary, so we can use that:
 
-    afl-fuzz -m none -i in -o out -x ~/afl-2.52b/dictionaries/xml.dict ./fuzzer @@
+    afl-fuzz -m none -i in -o out -x ~/afl-2.52b/dictionaries/xml.dict ./harness @@
 
 You should see the numbers of paths found grow much faster using this approach. Crucially, we'll also uncover a bug that would never be found without it.
 

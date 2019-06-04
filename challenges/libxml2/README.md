@@ -25,4 +25,4 @@ If you're comfortable experimenting or confident in your approach, implement a h
 
 Once you've implemented a harness, you can compile it using a command like this:
 
-    AFL_USE_ASAN=1 afl-clang-fast ./harness.c -I libxml2/include libxml2/.libs/libxml2.a -lz -lm -o fuzzer
+    AFL_USE_ASAN=1 afl-clang-fast ./harness.c -I libxml2/include libxml2/.libs/libxml2.a -lz -lm -o harness
