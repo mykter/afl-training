@@ -25,8 +25,8 @@ echo "fuzzer:$PASS" | chpasswd
 if [[ -n "$MANUALCPUS" ]]; then
     echo "Setting default value of AFL_NO_AFFINITY"
     echo "export AFL_NO_AFFINITY=1" >> /etc/profile
-    echo "stty -ixon" >> /etc/profile # don't treat ctrl+s as scrolllock
 fi
+echo "stty -ixon" >> /etc/profile # don't treat ctrl+s as scrolllock
 
 echo "Spawning SSHd"
 /usr/sbin/sshd -D

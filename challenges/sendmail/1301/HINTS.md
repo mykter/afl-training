@@ -5,7 +5,7 @@ This sample comes with a handy ready-made wrapper. main.c takes a file specified
 Compile with something like:
 
     make clean
-    CC=/path/to/afl-clang-fast make
+    CC=afl-clang-fast make
 
 (you could consider adding deferred forkserver or persistent mode support, or compiling with AFL_HARDEN=1 or ASAN)
 
