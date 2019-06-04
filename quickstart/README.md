@@ -49,7 +49,7 @@ The `vulnerable` program
 
 Build our quickstart program using the instrumented compiler:
 
-    $ cd /path/to/quickstart # (e.g. ~/afl-training/quickstart)
+    $ cd quickstart
     $ CC=afl-clang-fast AFL_HARDEN=1 make
 
 Test it:
