@@ -1,10 +1,10 @@
 libxml2 is a popular XML library. Libraries like this are perfect for fuzzing, they tick all the boxes:
- [x] Often parse user supplied data
- [x] Written in an unsafe language
- [x] Stateless
- [x] No network or filesystem interaction
- [x] The public documented API contains good targets - no need to identify and isolate an internal component to fuzz
- [x] Fast
+ - Often parse user supplied data
+ - Written in an unsafe language
+ - Stateless
+ - No network or filesystem interaction
+ - The public documented API contains good targets - no need to identify and isolate an internal component to fuzz
+ - Fast
 
 This makes it an ideal first target to write a fuzz harness for.
 
@@ -15,7 +15,7 @@ Build and test v2.9.2 with AFL and Address Sanitizer instrumentation by running:
     cd libxml2
     CC=afl-clang-fast ./autogen.sh
     AFL_USE_ASAN=1 make -j 4
-    ASAN_OPTIONS=detect_leaks=0 ./testModule    # leak detection doesn't work in a container as it can't attach to the process
+    ./testModule    # leak detection doesn't work in a container as it can't attach to the process
 ```
 Now we have a working instrumented build of the library, but no fuzzing harness to use.
 
@@ -25,4 +25,5 @@ If you're comfortable experimenting or confident in your approach, implement a h
 
 Once you've implemented a harness, you can compile it using a command like this:
 
-    AFL_USE_ASAN=1 afl-clang-fast ./harness.c -I libxml2/include libxml2/.libs/libxml2.a -lz -lm -o harness
+    AFL_USE_ASAN=1 afl-clang-fast ./harness.c -I libxml2/include libxml2/.libs/libxml2.a -lz -lm -o fuzzer
+
