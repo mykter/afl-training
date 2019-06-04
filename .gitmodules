@@ -4,3 +4,6 @@
 [submodule "challenges/heartbleed/openssl"]
 	path = challenges/heartbleed/openssl
 	url = https://github.com/openssl/openssl.git
+[submodule "challenges/date/coreutils"]
+	path = challenges/date/coreutils
+	url = https://git.savannah.gnu.org/git/coreutils.git

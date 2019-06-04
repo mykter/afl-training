@@ -18,12 +18,12 @@ A suitable fuzzing command on a 64 bit machine might be:
 
 For vanilla fuzzing:
 
-	$ ~/afl-2.44b/afl-fuzz -i in -o out -- ./coreutils/src/date --date "2017-03-14 15:00 UTC"
+	$ afl-fuzz -i in -o out -- ./coreutils/src/date --date "2017-03-14 15:00 UTC"
 Note the fixed date, but with a timezone specified to ensure we don't skip past any timezone processing code. (this bug is triggered whether or not you specify a timezone in the date - but consider how this could affect what is tested!)
 
 For ASAN fuzzing:
 
- 	$ sudo ~/local/afl-2.44b/experimental/asan_cgroups/limit_memory.sh -u mmacnair ~/local/afl-2.44b/afl-fuzz -m none -i in -o out -- ./coreutils/src/date --date "2017-03-14T15:00-UTC"
+ 	$ sudo ~/afl-2.52b/experimental/asan_cgroups/limit_memory.sh -u fuzzer ~/local/afl-2.52b/afl-fuzz -m none -i in -o out -- ./coreutils/src/date --date "2017-03-14T15:00-UTC"
 Note the format of the date - when called via the `limit_memory.sh` script the quotes get lost - you can either escape them or use a date format without spaces.
 
 (If you're having trouble with ASAN, you can try being lazy and just running without cgroups and use "-m none". The kernel might start killing off your processes if you hit an OOM condition, but in this instance it will probably be ok...)

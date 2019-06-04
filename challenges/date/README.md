@@ -6,10 +6,8 @@ Here we want to fuzz an environment variable - refer to the manpage to identify 
 
 The basic process for compiling date with afl is familiar. Be sure to checkout the specified version or earlier.
 
-	$ git clone https://git.savannah.gnu.org/git/coreutils.git
-	$ cd coreutils
-	$ git checkout f4570a9
-	$ sudo apt install autopoint bison gperf autoconf
+	$ git submodule init && git submodule update 
+	$ sudo apt install autopoint bison gperf autoconf # already installed in the container environment
 	$ ./bootstrap
 	$ <CC=...> ./configure
 	$ <any AFL compile options> make -j
