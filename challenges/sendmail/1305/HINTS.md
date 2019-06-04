@@ -6,7 +6,7 @@ To skip this step, just do:
 
 The makefile uses CC as per normal, so the standard compilation approach will work, e.g.:
 
-    CC=/path/to/afl-clang-fast make
+    CC=afl-clang-fast make
 
 A sensible seed might be your email address, e.g.
 
