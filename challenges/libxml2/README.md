@@ -15,7 +15,10 @@ Build and test v2.9.2 with AFL and Address Sanitizer instrumentation by running:
     cd libxml2
     CC=afl-clang-fast ./autogen.sh
     AFL_USE_ASAN=1 make -j 4
-    ./testModule    # leak detection doesn't work in a container as it can't attach to the process
+    ./testModule
+    # leak detection doesn't work in a container as it can't attach to the process.
+    # Run with ASAN_OPTIONS=detect_leaks=0 set to disable this ASAN feature, e.g.
+    # ASAN_OPTIONS=detect_leaks=0 ./testModule
 ```
 Now we have a working instrumented build of the library, but no fuzzing harness to use.
 
