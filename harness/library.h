@@ -1,3 +1,4 @@
+#include <unistd.h>
 // an 'nprintf' implementation - print the first len bytes of data
 void lib_echo(char *data, ssize_t len);
 
