@@ -68,7 +68,7 @@ Fuzz it:
     $ afl-fuzz -i inputs -o out ./vulnerable
 
 Your session should soon resemble this:
-![fuzzing session]('./afl-screenshot.png')
+![fuzzing session](./afl-screenshot.png)
 
 For comparison you could also test without the provided example inputs, e.g.:
 
