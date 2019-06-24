@@ -2,6 +2,9 @@ This small exercise is about writing a harness around a bit of code to allow it 
 
 If you were comfortable with what was happening when fuzzing the `vulnerable` quickstart program, and understand how afl sends data to the target program, you can skip this and move on to the challenges.
 
+This diagram shows the main components and interactions when using AFL:
+![afl overview](./overview.svg)
+
 Test harness basics
 -------------------
 
