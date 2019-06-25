@@ -36,7 +36,7 @@ The chosen bugs are all fairly well isolated, and (except where noted) are very 
 
 # Slides
 
-Via [Google docs](https://docs.google.com/presentation/d/e/2PACX-1vT1wZA5KumUw5aInwQGv8bKJbXfvKz6DHXSBgfwluKwSRUReV8OyQU0yKRDh1QsvAjoHD2Uf2JD1qIW/pub?start=false&loop=false&delayms=60000) or in [PowerPoint format](https://github.com/mykter/afl-training/files/3253433/Fuzzing.with.AFL.pptx). There is extra information in the speaker notes.
+Via [Google slides](https://drive.google.com/file/d/1g78GgmMtxn_Aei2L1K6UzaCQmjaqiUNj/view?usp=sharing) and in [PowerPoint format](https://github.com/mykter/afl-training/files/3325293/Fuzzing.with.AFL.pptx). There is extra information in the speaker notes.
 
 # Links
 
