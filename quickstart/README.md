@@ -39,8 +39,7 @@ Get, build, and install afl:
     $ wget http://lcamtuf.coredump.cx/afl/releases/afl-latest.tgz
     $ tar xvf afl-latest.tgz
     $ cd afl-2.52b   # replace with whatever the current version is
-    $ make
-    $ make -C llvm_mode
+    $ make && make -C llvm_mode CXX=g++
     $ make install
 
 
