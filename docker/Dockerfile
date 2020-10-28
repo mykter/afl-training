@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y \
     libtool pkg-config libz-dev python2.7-dev \
     awscli openssh-server ncat \
     emacs vim nano screen htop man manpages-posix-dev wget httpie bash-completion \
-    gdb \
+    gdb byobu \
     && rm -rf /var/lib/apt/lists
 
 RUN echo y | unminimize
