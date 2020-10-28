@@ -6,10 +6,11 @@ To skip this step, just do:
 
 The makefile uses CC as per normal, so the standard compilation approach will work, e.g.:
 
-    CC=afl-clang-fast make
+    CC=afl-clang-fast AFL_USE_ASAN=1 make
 
 A sensible seed might be your email address, e.g.
 
-    echo -n "michael.macnair@thales-esecurity.com" > in/seed
+    echo -n "michael@mykter.com" > in/seed
 
-You may want to experiment with the deferred fork server and persistent mode, to see how much more performance you can eke out of it. 
+You may want to experiment with the deferred fork server and persistent mode, to see how much more performance you can
+eke out of it.

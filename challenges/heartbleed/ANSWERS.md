@@ -12,3 +12,9 @@ Insert this immediately prior to the BIO_write:
       printf("Failed to read from stdin\n");
       return(-1);
     }
+
+Note the rate at which it finds new paths isn't astronomical, but that's OK - give it a few minutes tops and you should
+find success.
+
+When you find a crash, stop AFL and run the crash through the fuzzer. You should see in the ASAN stacktrace that the
+crash is in a heartbeat function - that's heartbleed!

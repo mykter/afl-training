@@ -570,10 +570,10 @@ int main(){
   ConfigLevel = 5;
   
   CurEnv = (ENVELOPE *) malloc(sizeof(struct envelope));
-  CurEnv->e_to = (char *) malloc(size + 1); 
+  CurEnv->e_to = (char *) malloc(MAX_MESSAGE_SIZE + 1); 
 
   // Read from stdin
-  addr = (char *) malloc(MAX_MESSAGE_SIZE);
+  addr = (char *) calloc(1,MAX_MESSAGE_SIZE+1);
 #ifdef __AFL_HAVE_MANUAL_CONTROL
   __AFL_INIT();
   while (__AFL_LOOP(1000)) {
