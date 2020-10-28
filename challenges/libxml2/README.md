@@ -15,8 +15,8 @@ Build and test v2.9.2 with AFL and Address Sanitizer instrumentation by running:
     git submodule init
     git submodule update
     cd libxml2
-    CC=afl-clang-lto ./autogen.sh
-    AFL_USE_ASAN=1 make -j 4 # linking will take a long time! afl-clang-fast is quicker to compile and works fine
+    CC=afl-clang-fast ./autogen.sh # you could also use afl-clang-lto, which is usally the better choice, but - oddly - in this case it takes longer to find the bug with an lto build.
+    AFL_USE_ASAN=1 make -j 4
     # ./testModule # if you have compiled with ASAN, the tests fail - there are illegal memory accesses in the built-in test harness!
     # leak detection doesn't work in an unprivileged container as it can't attach to the process.
     # Run with ASAN_OPTIONS=detect_leaks=0 set to disable this ASAN feature, e.g.
@@ -33,4 +33,4 @@ Or, move right on to [HINTS.md](./HINTS.md) for some specific guidance on making
 
 Once you've implemented a harness, you can compile it using a command like this:
 
-    AFL_USE_ASAN=1 afl-clang-lto ./harness.c -I libxml2/include libxml2/.libs/libxml2.a -lz -lm -o fuzzer
+    AFL_USE_ASAN=1 afl-clang-fast ./harness.c -I libxml2/include libxml2/.libs/libxml2.a -lz -lm -o fuzzer
