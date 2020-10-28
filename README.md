@@ -50,8 +50,9 @@ it will take to find a particular bug, just a probability distribution.
 # Slides
 
 Via
-[Google slides](https://docs.google.com/presentation/d/e/2PACX-1vQWx9bCm_WzSec1Okd8PM2vOf2TQRoM4snxsHSHSLWMfgSWzcJHxWkkdhRPw-a7Flq_5X2QpGI8vwUH/pub?start=false&loop=false&delayms=60000).
-There is extra information in the speaker notes.
+[Google slides](https://docs.google.com/presentation/d/e/2PACX-1vQWx9bCm_WzSec1Okd8PM2vOf2TQRoM4snxsHSHSLWMfgSWzcJHxWkkdhRPw-a7Flq_5X2QpGI8vwUH/pub?start=false&loop=false&delayms=60000)
+and [as a PDF](https://github.com/mykter/afl-training/files/5454345/Fuzzing.with.AFL.-.GrayHat.2020.pdf). There is extra
+information in the speaker notes.
 
 # Links
 
