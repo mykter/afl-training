@@ -19,7 +19,7 @@ The first public version of this workshop was presented at SteelCon 2017 and it 
 - harness - the basics of creating a test harness. Do this if you have any doubts about the "plumbing" between afl-fuzz
   and the target code.
 - challenges - a set of known-vulnerable programs with fuzzing hints
-- docker - Instructions and Dockerfile for preparing a suitable environment, and hosting it on AWS if you wish. A
+- docker - Instructions and Dockerfile for preparing a suitable environment, and hosting it on GCP if you wish. A
   prebuilt image is on Docker Hub at [mykter/afl-training](https://hub.docker.com/r/mykter/afl-training).
 
 See the other READMEs for more information.
