@@ -2,8 +2,26 @@
 
 Materials of the "Fuzzing with AFL" workshop by Michael Macnair (@michael_macnair).
 
+This workshop introduces fuzzing and how to make the most of using American Fuzzy Lop, a popular and powerful fuzzer,
+through a series of challenges where you rediscover real vulnerabilities in popular open source projects.
+
 The first public version of this workshop was presented at SteelCon 2017 and it was revised for each of BSides London
-2019, BSides Bristol 2019, and GrayHat 2020.
+2019, BSides Bristol 2019, and GrayHat 2020 (most notable change in this revision was a switch to
+[afl++](https://github.com/AFLplusplus/AFLplusplus)).
+
+# Presentation
+
+Via
+[Google slides](https://docs.google.com/presentation/d/e/2PACX-1vQWx9bCm_WzSec1Okd8PM2vOf2TQRoM4snxsHSHSLWMfgSWzcJHxWkkdhRPw-a7Flq_5X2QpGI8vwUH/pub?start=false&loop=false&delayms=60000)
+and [as a PDF](https://github.com/mykter/afl-training/files/5454345/Fuzzing.with.AFL.-.GrayHat.2020.pdf). There is extra
+information in the speaker notes.
+
+GrayHat published [a recording of a remote version of the workshop](https://www.youtube.com/watch?v=6YLz9IGAGLw) on
+YouTube - this was created for a real-time workshop audience, but you can follow along at your own pace as long as you
+don't mind skipping a few pauses and ignoring references to Discord.
+
+The presentation suggests when to attempt the different challenges in this repository, and the video provides a
+walk-through of `quickstart` and `harness`.
 
 # Pre-requisites
 
@@ -44,15 +62,8 @@ with the exception of the Cyber Grand Challenge extract, which is a synthetic vu
 
 The chosen bugs are all fairly well isolated, and (except where noted) are very amenable to fuzzing. This means that you
 should be able to discover the bugs with a relatively small amount of compute time - these won't take core-days, most of
-them will take core-minutes. That said, fuzz testing is be definition a random process, so there's no guarantee how long
+them will take core-minutes. That said, fuzz testing is by definition a random process, so there's no guarantee how long
 it will take to find a particular bug, just a probability distribution.
-
-# Slides
-
-Via
-[Google slides](https://docs.google.com/presentation/d/e/2PACX-1vQWx9bCm_WzSec1Okd8PM2vOf2TQRoM4snxsHSHSLWMfgSWzcJHxWkkdhRPw-a7Flq_5X2QpGI8vwUH/pub?start=false&loop=false&delayms=60000)
-and [as a PDF](https://github.com/mykter/afl-training/files/5454345/Fuzzing.with.AFL.-.GrayHat.2020.pdf). There is extra
-information in the speaker notes.
 
 # Links
 
