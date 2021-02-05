@@ -2,7 +2,7 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   docker:
@@ -29,7 +29,7 @@ jobs:
         with:
           context: environment
           push: true
-          tags: mykter/afl-training:latest
+          tags: ghcr.io/mykter/afl-training:latest
 
       - name: Image digest
         run: echo ${{ steps.build_push.outputs.digest }}
