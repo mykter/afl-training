@@ -28,9 +28,13 @@ case "$PASSMETHOD" in
     echo "$(hostname) $IP $PASS" | nc $PASSHOST $PASSPORT # network listeners get free access to our instances ¯\_(ツ)_/¯
     # $PASSHOST should run something like "nc -kl $PASSPORT | tee passwords.txt"
     ;;
+"gcpmeta")
+    PASS=$(head -c 9 /dev/urandom | base64)
+    echo $PASS | http --check-status Metadata-Flavor:Google POST http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/fuzzing/password
+    ;;
 *)
     echo "You must specify a method for setting the fuzzer user's password, or use a different entrypoint." >&2
-    echo "set the PASSMETHOD environment variable to 'env' or 'awsssm'" >&2
+    echo "set the PASSMETHOD environment variable to 'env', 'awsssm', 'gcpmeta', or 'callback'" >&2
     exit 1
     ;;
 esac
