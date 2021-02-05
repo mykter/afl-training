@@ -30,7 +30,7 @@ case "$PASSMETHOD" in
     ;;
 "gcpmeta")
     PASS=$(head -c 9 /dev/urandom | base64)
-    echo $PASS | http --check-status Metadata-Flavor:Google POST http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/fuzzing/password
+    echo $PASS | http --check-status PUT http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/fuzzing/password Metadata-Flavor:Google 
     ;;
 *)
     echo "You must specify a method for setting the fuzzer user's password, or use a different entrypoint." >&2

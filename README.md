@@ -38,7 +38,7 @@ walk-through of `quickstart` and `harness`.
   and the target code.
 - challenges - a set of known-vulnerable programs with fuzzing hints
 - docker - Instructions and Dockerfile for preparing a suitable environment, and hosting it on GCP if you wish. A
-  prebuilt image is on Docker Hub at [mykter/afl-training](https://hub.docker.com/r/mykter/afl-training).
+  prebuilt image can be pulled from [ghcr.io/mykter/fuzz-training](https://ghcr.io/mykter/fuzz-training).
 
 See the other READMEs for more information.
 
