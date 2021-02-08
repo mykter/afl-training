@@ -1,13 +1,13 @@
-This Dockerfile produces a docker image set up ready for the training. It is available on the Docker Hub as
-[mykter/afl-training](http://hub.docker.com/r/mykter/afl-training).
+This Dockerfile produces a docker image set up ready for the training. It is available at
+[ghcr.io/mykter/fuzz-training](http://ghcr.io/mykter/fuzz-training).
 
 # Building
 
-    $ docker build . -t afltraining
+    $ docker build . -t fuzz-training
 
 # Running Locally
 
-    $ docker run --privileged -p 22000:22 -e PASSMETHOD=env -e PASS=<password> afltraining
+    $ docker run --privileged -p 22000:22 -e PASSMETHOD=env -e PASS=<password> fuzz-training
     $ ssh fuzzer@localhost -p 22000
 
 You need to use a privileged container to use the `asan_cgroups/limit_memory.sh` script and to use debuggers like gdb.
@@ -46,10 +46,10 @@ host's.
         $ gcloud compute networks subnets create main --network=fuzz-training --enable-flow-logs --range=10.0.0.0/24 --region=us-central1
         $ gcloud compute firewall-rules create allow-workshop-ssh \
                 --allow=tcp:2222 --direction=INGRESS --network=fuzz-training --target-tags=student
-        $ gcloud compute instance-templates create-with-container afl-training \
-                --container-image mykter/afl-training \
+        $ gcloud compute instance-templates create-with-container fuzz-training \
+                --container-image ghcr.io/mykter/fuzz-training \
                 --container-privileged \
-                --container-env <PASS METHOD AND OPTIONS - see below>,SSHPORT=2222,SYSTEMCONFIG=1 \
+                --container-env PASSMETHOD=<see below>,SSHPORT=2222,SYSTEMCONFIG=1 \
                 --machine-type n2-standard-4 \
                 --region us-central1 \
                 --network fuzz-training --subnet main \
@@ -69,7 +69,7 @@ To fix a static password for all instances, use:
 
 Then try something like this:
 
-    $ gcloud compute instances create afl-training-{} --zone=us-central1-a --source-instance-template=afl-training \
+    $ gcloud compute instances create fuzz-training-{} --zone=us-central1-a --source-instance-template=fuzz-training
 
 ## Facilitator-managed VMs
 
@@ -92,7 +92,7 @@ When creating the instance template, use:
 
 Spin up some instances (number defined in the brace expansion at the end).
 
-      $ parallel --verbose --keep-order "gcloud compute instances create afl-training-{} --zone=us-central1-a --source-instance-template=afl-training" ::: {1..2}
+      $ parallel --verbose --keep-order "gcloud compute instances create fuzz-training-{} --zone=us-central1-a --source-instance-template=fuzz-training" ::: {1..2}
 
 ## Self-service VMs
 
@@ -105,12 +105,12 @@ Create the template with:
             --container-env PASSMETHOD=gcpmeta,...
 
 Create a service account that has the Compute Admin role (or at least enough permissions to create VMs and read their
-metadata)
+metadata), and then deploy a Cloud Run service:
 
-        $ cd self-serve
-        $ docker build . -t gcr.io/myproj/self-serve:latest
-        $ gcloud run deploy fuzz-training-provisioner --image=gcr.io/myproj/self-serve \
+        $ export KEY=$(head -c 32 /dev/urandom | base64)
+        $ gcloud run deploy fuzz-training-provisioner --image=ghcr.io/mykter/fuzz-training-provisioner \
                 --allow-unauthenticated --max-instances=1 --min-instances=1 \
+                --set-env-vars=PROJECT=my-gcp-proj,ZONE=us-central-1a,TEMPL=fuzz-training,COOKIE_KEY=${KEY},VMLIMIT=100,DEBUG=0 \
                 --service-account=<self-serve-account-id>
 
 Point your students at the URL the service is deployed to, and they will be able to create a VM and get the credentials
