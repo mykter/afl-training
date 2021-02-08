@@ -107,14 +107,21 @@ Create the template with:
 Create a service account that has the Compute Admin role (or at least enough permissions to create VMs and read their
 metadata), and then deploy a Cloud Run service:
 
+        $ cd self-serve && docker build . -t gcr.io/<myproj>/fuzz-training-provisioner && docker push gcr.io/<myproj>/fuzz-training-provisioner
         $ export KEY=$(head -c 32 /dev/urandom | base64)
-        $ gcloud run deploy fuzz-training-provisioner --image=ghcr.io/mykter/fuzz-training-provisioner \
+        $ gcloud beta run deploy fuzz-training-provisioner --image=gcr.io/myproj/fuzz-training-provisioner \
                 --allow-unauthenticated --max-instances=1 --min-instances=1 \
-                --set-env-vars=PROJECT=my-gcp-proj,ZONE=us-central-1a,TEMPL=fuzz-training,COOKIE_KEY=${KEY},VMLIMIT=100,DEBUG=0 \
+                --set-env-vars=PROJECT=my-gcp-proj,ZONE=us-central1-a,TEMPL=fuzz-training,COOKIE_KEY=${KEY},VMLIMIT=100,DEBUG=0 \
                 --service-account=<self-serve-account-id>
 
 Point your students at the URL the service is deployed to, and they will be able to create a VM and get the credentials
-for it.
+for it. They can also delete their VM when they've finished with it.
+
+Note the use of --min-instances - it's a bit of a hacky implementation with only in-memory state; to properly enforce
+the VM limit, exactly one instance must run at all times. Because of this, don't forget to delete the service when
+you're done: it won't scale to zero!
+
+        $ gcloud run services delete fuzz-training-provisioner
 
 ## Running
 
@@ -122,7 +129,7 @@ SSH in (with the port configured previously):
 
         $ ssh fuzzer@<IP> -p 2222
 
-For max performance, and when doing multi-core fuzzing, we have to manually specify which CPUs to bind to, because AFL
+For max performance, and when doing multi-core fuzzing, we should manually specify which CPUs to bind to, because AFL
 can't tell which ones it has access to. In this workshop, as each student has their own VM and all of the cores on it,
 we don't bother with this optimization however. See Brandon Falk's excellent post on
 [scaling AFL to 256 threads](https://gamozolabs.github.io/fuzzing/2018/09/16/scaling_afl.html) for details (or the

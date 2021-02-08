@@ -11,8 +11,9 @@ This package implements the following HTTP endpoints and behaviour:
 	POST /provision with cookie, provisioning not started -> provision, set cookie requested, redirect /
 	any other request to /provision -> redirect to /
 
-State is maintained largely in-memory - if the instance dies everything is lost.
+State is maintained entirely in memory and cookies.
 If a request is made with a machine ID we don't have a record of, its details are fetched from GCP.
+Ideally exactly one instance of this server should run at all times.
 */
 
 import (
@@ -20,6 +21,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"html/template"
 	"io"
 	insecureRand "math/rand"
 	"net/http"
@@ -27,7 +29,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"text/template"
 	"time"
 
 	"github.com/gorilla/sessions"
@@ -81,23 +82,35 @@ func randomString(n int) string {
 	return string(b)
 }
 
-func writeHtml(w io.Writer, main string) {
-	templ := template.Must(template.New("html").Parse(`
-		<head>
-			<link rel="stylesheet" href="/mvp.css">
-			<title>Fuzz Training</title>
-		</head>
-		<body>
-			<main>
-				<h1>Fuzz Training</h1>
-				{{.}}
-			</main>
-		</body>
-		`))
+// render the provided yield template within the main site layout
+func writeHtml(w io.Writer, yield string, data interface{}) {
+	err := template.Must(template.New("html").Parse(yield+`
+	{{define "machineDetails"}}
+		<p><table>
+			<tr><td>IP Address</td> <td>{{.Status.IP}}</td></tr>
+			<tr><td>Username</td> <td>`+username+`</td></tr>
+			<tr><td>Password</td> <td>{{.Status.Password}}</td></tr>
+			<tr><td>Port</td> <td>`+fmt.Sprint(sshPort)+`</td></tr>
+			<tr><td>ID</td> <td>{{.Status.VMName}}</td></tr>
+		</table></p>
+	{{end}}
+	{{define "ssh"}}
+			<p><code>ssh `+username+`@{{.Status.IP}} -p `+fmt.Sprint(sshPort)+`</code></p>
+	{{end}}
 
-	err := templ.Execute(w, main)
+	<head>
+		<link rel="stylesheet" href="/mvp.css">
+		<title>Fuzz Training</title>
+	</head>
+	<body>
+		<main>
+			<h1>Fuzz Training</h1>
+			{{ template "yield" .}}
+		</main>
+	</body>
+		`)).Execute(w, data)
 	if err != nil {
-		log.Error().Err(err).Msg("Writing response")
+		log.Error().Err(err).Msg("Writing html")
 	}
 }
 
@@ -141,6 +154,7 @@ func (rt *Runtime) getStatus(session *sessions.Session, w http.ResponseWriter) (
 		status = &Status{ID: id, VMName: vm, Requested: true, ProvisionStart: time.Now(), lock: &sync.Mutex{}}
 		rt.lock.Lock()
 		rt.sessions[id] = status
+		rt.vms = append(rt.vms, vm)
 		rt.lock.Unlock()
 	}
 	return status, true
@@ -203,20 +217,26 @@ func (rt *Runtime) handleRoot(w http.ResponseWriter, r *http.Request) {
 
 	if !status.Requested {
 		log.Debug().Msg("serving request form")
-		writeHtml(w, `
-		<form action="/provision" method="post">
-			<header>
-				<h2>Provision VM</h2>
-			</header>
-			<label for="input1">Your name (to aid the facilitator):</label>
-			<input type="text" id="name" name="name" size="20">
-			<button type="submit">Provision</button>
-		</form>
-		`)
+		writeHtml(w,
+			`{{define "yield"}}
+				<form action="/provision" method="post">
+					<header>
+						<h2>Provision VM</h2>
+					</header>
+					<label for="input1">Your name (to aid the facilitator):</label>
+					<input type="text" id="name" name="name" size="20">
+					<button type="submit">Provision</button>
+				</form>
+			{{end}}`,
+			nil)
 		return
 	} else if status.Error != "" {
-		writeHtml(w, `<p>There was an error whilst provisioning your machine!</p><p><pre>`+status.Error+`</pre></p>
-		 <p>Please contact your facilitator. If they ask you to try again, please <a href="/reset">reset your session</a>.</p>`)
+		writeHtml(w,
+			`{{define "yield"}}
+				<p>There was an error whilst provisioning your machine!</p><p><pre>{{.Status.Error}}</pre></p>
+				<p>Please contact your facilitator. If they ask you to try again, please <a href="/reset">reset your session</a>.</p>
+			{{end}}`,
+			struct{ Status *Status }{status})
 		return
 	} else if !status.Provisioned {
 		rt.updateStatus(status)
@@ -224,33 +244,35 @@ func (rt *Runtime) handleRoot(w http.ResponseWriter, r *http.Request) {
 	}
 	if !status.Provisioned {
 		log.Debug().Msg("serving provisioning page")
-		writeHtml(w, `
-			<p>Your machine is being provisioned! This page will refresh every 5 seconds; your machine should be available in 2-3 minutes.</p>
-			<p>It's been `+time.Since(status.ProvisionStart).Round(time.Second).String()+` so far.</p>
-			<p>Current details:</p>`+machineDetails(status)+`
-			<script>setTimeout("location.reload(true);",5000);</script>
-		`)
+		writeHtml(w,
+			`{{define "yield"}}
+				<p>Your machine is being provisioned! This page will refresh every 5 seconds; your machine should be available in 2-3 minutes.</p>
+				<p>It's been {{.Duration}} so far.</p>
+				<p>Current details:</p>
+				{{template "machineDetails" .}}
+				<script>setTimeout("location.reload(true);",5000);</script>
+			{{end}}`,
+			struct {
+				Status   *Status
+				Duration string
+			}{
+				status,
+				time.Since(status.ProvisionStart).Round(time.Second).String(),
+			})
 		return
 	} else {
 		log.Debug().Msg("serving success page")
-		msg := "<p>Success! Your machine details: </p>" + machineDetails(status)
-		msg += "<p><code>ssh " + username + "@" + status.IP + " -p " + fmt.Sprint(sshPort) + "</code></p>"
-		msg += `<p>Please <a href="/delete">delete</a> your machine when you're finished.<p>`
-		writeHtml(w, msg)
+		writeHtml(w, `
+			{{define "yield"}}
+				<p>Success! Your machine details: </p>
+				{{template "machineDetails" .}}
+				{{template "ssh" .}}
+				<p>Please <a href="/delete">delete</a> your machine when you're finished.<p>
+			{{end}}`,
+			struct{ Status *Status }{status},
+		)
 		return
 	}
-}
-
-// Return an HTML table rendering of the student's VM details
-func machineDetails(s *Status) string {
-	msg := "<p><table>"
-	msg += "<tr><td>IP Address</td> <td>" + s.IP + "</td></tr>"
-	msg += "<tr><td>Username</td> <td>" + username + "</td></tr>"
-	msg += "<tr><td>Password</td> <td>" + s.Password + "</td></tr>"
-	msg += "<tr><td>Port</td> <td>" + fmt.Sprint(sshPort) + "</td></tr>"
-	msg += "<tr><td>ID</td> <td>" + s.VMName + "</td></tr>"
-	msg += "</table></p>"
-	return msg
 }
 
 // Verify that the client has a session with us; if so, initialize it and return to /, otherwise give an error
@@ -294,7 +316,7 @@ func (rt *Runtime) handleDelete(w http.ResponseWriter, r *http.Request) {
 		}
 		status, ok := rt.getStatus(session, w)
 		if !ok {
-			writeHtml(w, "<p>Couldn't find session</p>")
+			writeHtml(w, `{{define "yield"}}<p>Couldn't find session</p>{{end}}`, nil)
 			return
 		}
 
@@ -310,20 +332,32 @@ func (rt *Runtime) handleDelete(w http.ResponseWriter, r *http.Request) {
 		status.Deleted = true
 		status.lock.Unlock()
 
+		// remove the VM from the list
+		rt.lock.Lock()
+		for i, vm := range rt.vms {
+			if vm == status.VMName {
+				rt.vms[i] = rt.vms[len(rt.vms)-1]
+				rt.vms = rt.vms[:len(rt.vms)-1]
+			}
+		}
+		rt.lock.Unlock()
+
 		http.Redirect(w, r, "/reset", http.StatusFound)
 		return
 	}
-	writeHtml(w, `
-		<form action="/delete" method="post">
-			<header>
-				<h2>Delete VM?</h2>
-				<p>Are you sure you want to delete your VM? You will lose any work that you haven't copied off it already.</p>
-			</header>
-			<button type="submit">Delete</button>
-			<input type="button" name="cancel" value="cancel" onClick="window.location.href='/';" />         
-		</form>
-	
-	`)
+	writeHtml(w,
+		`{{define "yield"}}
+			<form action="/delete" method="post">
+				<header>
+					<h2>Delete VM?</h2>
+					<p>Are you sure you want to delete your VM? You will lose any work that you haven't copied off it already.</p>
+				</header>
+				<button type="submit">Delete</button>
+				<input type="button" name="cancel" value="cancel" onClick="window.location.href='/';" />         
+			</form>
+		{{end}}`,
+		nil,
+	)
 }
 
 // start provisioning if we haven't already, and redirect to /
@@ -544,6 +578,6 @@ func main() {
 		http.ServeFile(w, r, "favicon.ico")
 	}))
 
-	log.Info().Str("host", port).Msg("service started")
-	log.Fatal().Msg(http.ListenAndServe("localhost:"+port, nil).Error())
+	log.Info().Str("port", port).Msg("service started")
+	log.Fatal().Msg(http.ListenAndServe("0.0.0.0:"+port, nil).Error())
 }
