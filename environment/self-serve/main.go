@@ -11,15 +11,15 @@ This package implements the following HTTP endpoints and behaviour:
 	POST /provision with cookie, provisioning not started -> provision, set cookie requested, redirect /
 	any other request to /provision -> redirect to /
 
-State is maintained entirely in memory and cookies.
-If a request is made with a machine ID we don't have a record of, its details are fetched from GCP.
-Ideally exactly one instance of this server should run at all times.
+State is maintained primarily in cookies.
+If you want to enforce a limit on the number of VMs, exactly one instance of this server should run at all times, as the count is only maintained in memory.
 */
 
 import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/gob"
 	"fmt"
 	"html/template"
 	"io"
@@ -41,416 +41,173 @@ import (
 
 type Status struct {
 	ID             string // session ID
-	Name           string // who requested this VM
-	Requested      bool
+	Requestor      string
 	ProvisionStart time.Time
 	Provisioned    bool
-	Deleted        bool
 	VMName         string
 	IP             string
 	Password       string
 	Error          string
-	lock           *sync.Mutex
 }
 
 type Runtime struct {
-	lock                   *sync.Mutex
-	vms                    []string
-	sessions               map[string]*Status
 	cs                     *sessions.CookieStore
 	maxVMs                 int
 	compute                *compute.Service
 	zone                   string
 	sourceInstanceTemplate string
 	projectID              string
+
+	lock    *sync.Mutex
+	vmCount int
 }
 
-const sessionName = "id"
+const sessionName = "state"
 const username = "fuzzer"
 const sshPort = 2222
 const instanceNamePrefix = "fuzz-training-"
 const instanceNameSuffixLen = 6
 const createError = "Failed to create instance. Session ID: "
+const requestorNameLengthLimit = 30
 
-func randomString(n int) string {
-	var set = []rune("abcdefghkmnopqrstuvwxyz0123456789")
+// cookie values
+const sessionID = "id"
+const sessionVM = "vm"
+const sessionRequestor = "name"
+const sessionStart = "start"
+const sessionError = "error"
 
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = set[insecureRand.Intn(len(set))] // nolint: gosec // this doesn't need to be unpredictable
-	}
-	return string(b)
-}
+// render the provided main template within the site layout
+func writeHtml(w io.Writer, main string, data interface{}) {
+	err := template.Must(template.New("html").Parse(`
+		{{define "main"}}`+main+`{{end}}
+		{{define "machineDetails"}}
+			<p><table>
+				<tr><td>IP Address</td> <td>{{.Status.IP}}</td></tr>
+				<tr><td>Username</td> <td>`+username+`</td></tr>
+				<tr><td>Password</td> <td>{{.Status.Password}}</td></tr>
+				<tr><td>Port</td> <td>`+fmt.Sprint(sshPort)+`</td></tr>
+				<tr><td>ID</td> <td>{{.Status.VMName}}</td></tr>
+			</table></p>
+		{{end}}
+		{{define "ssh"}}
+				<p><code>ssh `+username+`@{{.Status.IP}} -p `+fmt.Sprint(sshPort)+`</code></p>
+		{{end}}
 
-// render the provided yield template within the main site layout
-func writeHtml(w io.Writer, yield string, data interface{}) {
-	err := template.Must(template.New("html").Parse(yield+`
-	{{define "machineDetails"}}
-		<p><table>
-			<tr><td>IP Address</td> <td>{{.Status.IP}}</td></tr>
-			<tr><td>Username</td> <td>`+username+`</td></tr>
-			<tr><td>Password</td> <td>{{.Status.Password}}</td></tr>
-			<tr><td>Port</td> <td>`+fmt.Sprint(sshPort)+`</td></tr>
-			<tr><td>ID</td> <td>{{.Status.VMName}}</td></tr>
-		</table></p>
-	{{end}}
-	{{define "ssh"}}
-			<p><code>ssh `+username+`@{{.Status.IP}} -p `+fmt.Sprint(sshPort)+`</code></p>
-	{{end}}
-
-	<head>
-		<link rel="stylesheet" href="/mvp.css">
-		<title>Fuzz Training</title>
-	</head>
-	<body>
-		<main>
-			<h1>Fuzz Training</h1>
-			{{ template "yield" .}}
-		</main>
-	</body>
+		<head>
+			<link rel="stylesheet" href="/mvp.css">
+			<title>Fuzz Training</title>
+		</head>
+		<body>
+			<main>
+				<h1>Fuzz Training</h1>
+				{{ template "main" .}}
+			</main>
+		</body>
 		`)).Execute(w, data)
 	if err != nil {
 		log.Error().Err(err).Msg("Writing html")
 	}
 }
 
-// Get the status associated with this session ID. On error, set an http.Error and return false
-// If the cookie includes a VM but the session doesn't exist; try and populate the session with VM details retrieved from the GCP API
-func (rt *Runtime) getStatus(session *sessions.Session, w http.ResponseWriter) (*Status, bool) {
-	val, ok := session.Values["id"]
+// Create a Status from the cookie, querying GCP API if a VMName is specified.
+// If session is nil, gets it from the request
+// Provided the cookie doesn't already have an error recorded, update the cookie with the updated status
+// On error, set an http.Error and return false
+func (rt *Runtime) getStatus(session *sessions.Session, w http.ResponseWriter, r *http.Request) (*Status, bool) {
+	if session == nil {
+		var err error
+		session, err = rt.cs.Get(r, sessionName)
+		if err != nil {
+			log.Error().Err(err).Msg("getStatus reading cookie")
+			http.Error(w, "error reading cookie", http.StatusInternalServerError)
+			return nil, false
+		}
+	}
+
+	status := &Status{}
+
+	val, ok := session.Values[sessionID]
 	if !ok {
-		log.Warn().Msgf("id value not in session")
+		log.Warn().Msgf("id value not in cookie")
 		http.Error(w, "failed to parse cookie; please enable cookies", http.StatusBadRequest)
 		return nil, false
 	}
-	id, ok := val.(string)
+	status.ID, ok = val.(string)
 	if !ok {
 		log.Warn().Msgf("id value in session was not the correct type. got '%v'", val)
 		http.Error(w, "failed to parse cookie; please reset your cookies and refresh", http.StatusBadRequest)
 		return nil, false
 	}
 
-	vm := ""
-	val, ok = session.Values["vm"]
+	val, ok = session.Values[sessionVM]
 	if ok {
-		vm, ok = val.(string)
+		status.VMName, ok = val.(string)
 		if !ok {
-			log.Warn().Msgf("vm value in session was not the correct type. got '%v'", val)
+			log.Warn().Str("id", status.ID).Msgf("vm value in session was not the correct type. got '%v'", val)
 			http.Error(w, "failed to parse cookie; please reset your cookies and refresh", http.StatusBadRequest)
 			return nil, false
 		}
 	}
 
-	status, ok := rt.sessions[id]
-	if !ok {
-		if vm == "" {
-			log.Warn().Str("id", id).Msg("ID that isn't in store found; user's session has been reset")
-			deleteCookie(w)
-			http.Error(w, "cookie error - your session has been reset - please refresh", http.StatusInternalServerError)
+	val, ok = session.Values[sessionRequestor]
+	if ok {
+		status.Requestor, ok = val.(string)
+		if !ok {
+			log.Warn().Str("id", status.ID).Msgf("requestor value in session was not the correct type. got '%v'", val)
+			http.Error(w, "failed to parse cookie; please reset your cookies and refresh", http.StatusBadRequest)
 			return nil, false
 		}
+	}
 
-		// there's no guarantee this VM exists, but if it doesn't the user will just get an error, which is what we want
-		status = &Status{ID: id, VMName: vm, Requested: true, ProvisionStart: time.Now(), lock: &sync.Mutex{}}
-		rt.lock.Lock()
-		rt.sessions[id] = status
-		rt.vms = append(rt.vms, vm)
-		rt.lock.Unlock()
+	val, ok = session.Values[sessionStart]
+	if ok {
+		status.ProvisionStart, ok = val.(time.Time)
+		if !ok {
+			log.Warn().Str("id", status.ID).Msgf("time value in session was not the correct type. got '%v'", val)
+			http.Error(w, "failed to parse cookie; please reset your cookies and refresh", http.StatusBadRequest)
+			return nil, false
+		}
+	}
+
+	val, ok = session.Values[sessionError]
+	if ok {
+		status.Error, ok = val.(string)
+		if !ok {
+			log.Warn().Str("id", status.ID).Msgf("error value in session was not the correct type. got '%v'", val)
+			http.Error(w, "failed to parse cookie; please reset your cookies and refresh", http.StatusBadRequest)
+			return nil, false
+		}
+	}
+
+	// don't clobber any previous error - the user can manually reset if they want to
+	if status.Error == "" {
+		rt.updateStatus(status)
+		rt.saveStatus(session, status, w, r)
 	}
 	return status, true
 }
 
-func deleteCookie(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{Name: "id", MaxAge: -1})
-}
-
-func (rt *Runtime) handleRoot(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		log.Debug().Str("method", r.Method).Msg("unexpected method for /")
-		http.Error(w, "Unsupported method", 400)
-		return
-	}
-	if (r.URL.Path != "/") && (r.URL.Path != "/index.html") {
-		log.Debug().Str("path", r.URL.Path).Msg("unhandled path")
-		http.Error(w, "", http.StatusNotFound)
-		return
-	}
-
-	session, err := rt.cs.Get(r, sessionName)
-	if err != nil {
-		log.Error().Err(err).Msg("reading cookie")
-		http.Error(w, "error reading cookie", http.StatusInternalServerError)
-		return
-	}
-
-	if session.IsNew {
-		b := make([]byte, 15)
-		_, err = rand.Read(b)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to generate session ID")
-			http.Error(w, "internal server error", http.StatusInternalServerError)
-			return
-		}
-		id := base64.StdEncoding.EncodeToString(b)
-
-		rt.lock.Lock()
-		rt.sessions[id] = &Status{ID: id, lock: &sync.Mutex{}}
-		rt.lock.Unlock()
-
-		session.Values["id"] = id
-		err = session.Save(r, w)
-		if err != nil {
-			log.Error().Err(err).Msg("whilst saving session")
-			http.Error(w, "server error whilst creating session", http.StatusInternalServerError)
-			return
-		}
-
-		log.Debug().Msg("New session, redirecting to /session to validate")
-		http.Redirect(w, r, "/session", http.StatusFound)
-		return
-	}
-
-	status, ok := rt.getStatus(session, w)
-	if !ok {
-		return
-	}
-
-	if !status.Requested {
-		log.Debug().Msg("serving request form")
-		writeHtml(w,
-			`{{define "yield"}}
-				<form action="/provision" method="post">
-					<header>
-						<h2>Provision VM</h2>
-					</header>
-					<label for="input1">Your name (to aid the facilitator):</label>
-					<input type="text" id="name" name="name" size="20">
-					<button type="submit">Provision</button>
-				</form>
-			{{end}}`,
-			nil)
-		return
-	} else if status.Error != "" {
-		writeHtml(w,
-			`{{define "yield"}}
-				<p>There was an error whilst provisioning your machine!</p><p><pre>{{.Status.Error}}</pre></p>
-				<p>Please contact your facilitator. If they ask you to try again, please <a href="/reset">reset your session</a>.</p>
-			{{end}}`,
-			struct{ Status *Status }{status})
-		return
-	} else if !status.Provisioned {
-		rt.updateStatus(status)
-		// this may change status.Provisioned to true
-	}
-	if !status.Provisioned {
-		log.Debug().Msg("serving provisioning page")
-		writeHtml(w,
-			`{{define "yield"}}
-				<p>Your machine is being provisioned! This page will refresh every 5 seconds; your machine should be available in 2-3 minutes.</p>
-				<p>It's been {{.Duration}} so far.</p>
-				<p>Current details:</p>
-				{{template "machineDetails" .}}
-				<script>setTimeout("location.reload(true);",5000);</script>
-			{{end}}`,
-			struct {
-				Status   *Status
-				Duration string
-			}{
-				status,
-				time.Since(status.ProvisionStart).Round(time.Second).String(),
-			})
-		return
-	} else {
-		log.Debug().Msg("serving success page")
-		writeHtml(w, `
-			{{define "yield"}}
-				<p>Success! Your machine details: </p>
-				{{template "machineDetails" .}}
-				{{template "ssh" .}}
-				<p>Please <a href="/delete">delete</a> your machine when you're finished.<p>
-			{{end}}`,
-			struct{ Status *Status }{status},
-		)
-		return
-	}
-}
-
-// Verify that the client has a session with us; if so, initialize it and return to /, otherwise give an error
-func (rt *Runtime) handleSession(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		log.Debug().Str("method", r.Method).Msg("unexpected method for /session")
-		http.Error(w, "Unsupported method", 400)
-		return
-	}
-
-	session, err := rt.cs.Get(r, sessionName)
-	if err != nil {
-		log.Error().Err(err).Msg("reading cookie")
-		http.Error(w, "error reading cookie", http.StatusInternalServerError)
-		return
-	}
-	if session.IsNew {
-		log.Warn().Msg("Request to /session with no cookies")
-		msg := "Sorry it looks like your browser isn't configured to accept cookies. Please enable them and try again."
-		http.Error(w, msg, http.StatusBadRequest)
-		return
-	}
-
-	// all is well - we have verified that cookie sessions work
-	http.Redirect(w, r, "/", http.StatusFound)
-}
-
-func (rt *Runtime) handleReset(w http.ResponseWriter, r *http.Request) {
-	// delete the cookie so they can try again
-	deleteCookie(w)
-	http.Redirect(w, r, "/", http.StatusFound)
-}
-
-func (rt *Runtime) handleDelete(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		session, err := rt.cs.Get(r, sessionName)
-		if err != nil {
-			log.Error().Err(err).Msg("reading cookie")
-			http.Error(w, "error reading cookie", http.StatusInternalServerError)
-			return
-		}
-		status, ok := rt.getStatus(session, w)
-		if !ok {
-			writeHtml(w, `{{define "yield"}}<p>Couldn't find session</p>{{end}}`, nil)
-			return
-		}
-
-		req := rt.compute.Instances.Delete(rt.projectID, rt.zone, status.VMName)
-		_, err = req.Do()
-		if err != nil {
-			log.Error().Err(err).Str("id", status.ID).Str("vm-name", status.VMName).Msg("deleting VM")
-			status.Error = "Failed to delete VM " + status.VMName
-			return
-		}
-
-		status.lock.Lock()
-		status.Deleted = true
-		status.lock.Unlock()
-
-		// remove the VM from the list
-		rt.lock.Lock()
-		for i, vm := range rt.vms {
-			if vm == status.VMName {
-				rt.vms[i] = rt.vms[len(rt.vms)-1]
-				rt.vms = rt.vms[:len(rt.vms)-1]
-			}
-		}
-		rt.lock.Unlock()
-
-		http.Redirect(w, r, "/reset", http.StatusFound)
-		return
-	}
-	writeHtml(w,
-		`{{define "yield"}}
-			<form action="/delete" method="post">
-				<header>
-					<h2>Delete VM?</h2>
-					<p>Are you sure you want to delete your VM? You will lose any work that you haven't copied off it already.</p>
-				</header>
-				<button type="submit">Delete</button>
-				<input type="button" name="cancel" value="cancel" onClick="window.location.href='/';" />         
-			</form>
-		{{end}}`,
-		nil,
-	)
-}
-
-// start provisioning if we haven't already, and redirect to /
-func (rt *Runtime) handleProvision(w http.ResponseWriter, r *http.Request) {
-	session, err := rt.cs.Get(r, sessionName)
-	if err != nil {
-		log.Error().Err(err).Msg("reading cookie")
-		http.Error(w, "error reading cookie", http.StatusInternalServerError)
-		return
-	}
-	status, ok := rt.getStatus(session, w)
-	if !ok {
-		return
-	}
-
-	name := strings.TrimSpace(r.FormValue("name"))
-	if len(name) == 0 {
-		http.Error(w, "you must enter a name", http.StatusBadRequest)
-		return
-	}
-
-	if status.Requested {
-		log.Warn().Str("id", status.ID).Str("name", name).Msg("/provision visited by user that is already provisioning")
-		http.Redirect(w, r, "/", http.StatusFound)
-		return
-	}
-
-	if rt.provision(status.ID, name) {
-		session.Values["vm"] = status.VMName
-		err = session.Save(r, w)
-		if err != nil {
-			log.Error().Err(err).Str("id", status.ID).Msg("whilst saving VMName to session")
-		}
-	}
-	http.Redirect(w, r, "/", http.StatusFound)
-}
-
-// Start VM creation. If a VM was created, returns true
-func (rt *Runtime) provision(id string, name string) bool {
-	log.Info().Str("id", id).Msg("Started provisioning")
-
-	status := rt.sessions[id]
-	status.lock.Lock()
-	defer status.lock.Unlock()
-
-	if status.Requested {
-		log.Warn().Str("id", id).Msg("Tried to provision an already-provisioning request")
-		return false
-	}
-
-	shortName := name
-	limit := 30
-	if len(shortName) > limit {
-		shortName = shortName[:limit]
-	}
-	status.Name = shortName
-	status.Requested = true
-	status.ProvisionStart = time.Now()
-
-	if rt.maxVMs > 0 && len(rt.vms) >= rt.maxVMs {
-		log.Warn().Int("num-vms", len(rt.vms)).Int("limit", rt.maxVMs).Msg("Hit VM limit")
-		status.Error = "VM limit hit, cannot provision additional VMs."
-		return false
-	}
-
-	status.VMName = instanceNamePrefix + randomString(instanceNameSuffixLen)
-
-	ins := rt.compute.Instances.Insert(rt.projectID, rt.zone, &compute.Instance{
-		Name:            status.VMName,
-		ServiceAccounts: []*compute.ServiceAccount{},
-		Zone:            rt.zone,
-		// Metadata: can't alter this, as we have to use the template's metadata set via gcloud. GCP don't have a REST api method for running containers
-	})
-	ins.SourceInstanceTemplate(rt.sourceInstanceTemplate)
-	_, err := ins.Do()
-	if err != nil {
-		log.Error().Err(err).Str("id", id).Msg("creating instance")
-		status.Error = createError + id
-		return false
-	}
-
-	rt.lock.Lock()
-	rt.vms = append(rt.vms, status.VMName)
-	rt.lock.Unlock()
-
-	return true
-}
-
 // Update status with the details of the provisioned VM
 func (rt *Runtime) updateStatus(status *Status) {
+	if status.VMName == "" {
+		return
+	}
+
 	log.Debug().Str("id", status.ID).Msg("updating status")
-	status.lock.Lock()
-	defer status.lock.Unlock()
+
+	// get the instance - it might not exist if this cookie is stale
+	inst, err := rt.compute.Instances.Get(rt.projectID, rt.zone, status.VMName).Do()
+	if err != nil {
+		if herr, ok := err.(*googleapi.Error); ok && herr.Code == http.StatusNotFound {
+			log.Warn().Str("id", status.ID).Str("vm-name", status.VMName).Msg("VM not found")
+			status.Error = "VM not found. Session ID: " + status.ID
+			return
+		}
+		log.Error().Err(err).Str("id", status.ID).Str("vm-name", status.VMName).Msg("getting instance")
+		status.Error = createError + status.ID
+		return
+	}
 
 	req := rt.compute.Instances.GetGuestAttributes(rt.projectID, rt.zone, status.VMName)
 	req.QueryPath("fuzzing/password")
@@ -476,12 +233,7 @@ func (rt *Runtime) updateStatus(status *Status) {
 	log.Debug().Str("id", status.ID).Str("vm-name", status.VMName).Msg("got password")
 
 	// get the IP
-	// as the instance is running, it should have its IP already
-	inst, err := rt.compute.Instances.Get(rt.projectID, rt.zone, status.VMName).Do()
-	if err != nil {
-		log.Error().Err(err).Str("id", status.ID).Msg("getting instance")
-		status.Error = createError + status.ID
-	}
+	// as the instance is already fully up, it should have its IP
 	for _, n := range inst.NetworkInterfaces {
 		for _, ac := range n.AccessConfigs {
 			if ac.NatIP != "" {
@@ -497,7 +249,268 @@ func (rt *Runtime) updateStatus(status *Status) {
 
 	status.Provisioned = true
 
-	log.Info().Str("vm-name", status.VMName).Str("ip", status.IP).Str("user", status.Name).Msg("Provisioned machine")
+	log.Info().Str("vm-name", status.VMName).Str("ip", status.IP).Str("requestor", status.Requestor).Msg("got provisioned machine details")
+}
+
+func deleteCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{Name: sessionName, MaxAge: -1})
+}
+
+func (rt *Runtime) handleRoot(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		log.Debug().Str("method", r.Method).Msg("unexpected method for /")
+		http.Error(w, "Unsupported method", 400)
+		return
+	}
+	if (r.URL.Path != "/") && (r.URL.Path != "/index.html") {
+		log.Debug().Str("path", r.URL.Path).Msg("unhandled path")
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
+
+	session, err := rt.cs.Get(r, sessionName)
+	if err != nil {
+		log.Error().Err(err).Msg("handleRoot reading cookie")
+		http.Error(w, "error reading cookie", http.StatusInternalServerError)
+		return
+	}
+
+	if session.IsNew {
+		b := make([]byte, 15)
+		_, err = rand.Read(b)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to generate session ID")
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+		id := base64.StdEncoding.EncodeToString(b)
+
+		session.Values[sessionID] = id
+		err = session.Save(r, w)
+		if err != nil {
+			log.Error().Err(err).Msg("whilst saving session")
+			http.Error(w, "server error whilst creating session", http.StatusInternalServerError)
+			return
+		}
+
+		log.Debug().Msg("New session, redirecting to /session to validate")
+		http.Redirect(w, r, "/session", http.StatusFound)
+		return
+	}
+
+	status, ok := rt.getStatus(session, w, r)
+	if !ok {
+		return
+	}
+
+	if status.Error != "" {
+		log.Debug().Str("user-error", status.Error).Msg("serving error page")
+		writeHtml(w,
+			`<p>There was an error whilst provisioning your machine!</p><p><pre>{{.Status.Error}}</pre></p>
+			<p>Please contact your facilitator. If they ask you to try again, please <a href="/reset">reset your session</a>.</p>`,
+			struct{ Status *Status }{status})
+	} else if status.VMName == "" {
+		log.Debug().Msg("serving request form")
+		writeHtml(w,
+			`<form action="/provision" method="post">
+				<header>
+					<h2>Provision VM</h2>
+				</header>
+				<label for="input1">Your name (to aid the facilitator):</label>
+				<input type="text" id="requestor" name="requestor" size="20">
+				<button type="submit" onclick="this.form.submit(); this.innerText='Provisioning…'; this.disabled=true;">Provision</button>
+			</form>`,
+			nil)
+	} else if !status.Provisioned {
+		log.Debug().Msg("serving in-progress page")
+		writeHtml(w,
+			`<p>Your machine is being provisioned! This page will refresh every 5 seconds; your machine should be available within 3 minutes.</p>
+			<p>It's been {{.Duration}} so far.</p>
+			<p>Current details:</p>
+			{{template "machineDetails" .}}
+			<script>setTimeout("location.reload(true);",5000);</script>`,
+			struct {
+				Status   *Status
+				Duration string
+			}{
+				status,
+				time.Since(status.ProvisionStart).Round(time.Second).String(),
+			})
+	} else {
+		log.Debug().Msg("serving success page")
+		writeHtml(w, `<p>Success! Your machine details: </p>
+			{{template "machineDetails" .}}
+			{{template "ssh" .}}
+			<p>Please <a href="/delete">delete</a> your machine when you're finished.<p>`,
+			struct{ Status *Status }{status},
+		)
+	}
+}
+
+// Verify that the client has a session with us; if so, initialize it and return to /, otherwise give an error
+func (rt *Runtime) handleSession(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		log.Debug().Str("method", r.Method).Msg("unexpected method for /session")
+		http.Error(w, "Unsupported method", 400)
+		return
+	}
+
+	session, err := rt.cs.Get(r, sessionName)
+	if err != nil {
+		log.Error().Err(err).Msg("handleSession reading cookie")
+		http.Error(w, "error reading cookie", http.StatusInternalServerError)
+		return
+	}
+	if session.IsNew {
+		log.Warn().Msg("Request to /session with no cookies")
+		msg := "Sorry it looks like your browser isn't configured to accept cookies. Please enable them and try again."
+		http.Error(w, msg, http.StatusBadRequest)
+		return
+	}
+
+	// all is well - we have verified that cookie sessions work
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+func (rt *Runtime) handleReset(w http.ResponseWriter, r *http.Request) {
+	// delete the cookie so they can try again
+	deleteCookie(w)
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+func (rt *Runtime) handleDelete(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		status, ok := rt.getStatus(nil, w, r)
+		if !ok {
+			writeHtml(w, `<p>Couldn't find session</p>`, nil)
+			return
+		}
+
+		log.Info().Str("vm-name", status.VMName).Str("id", status.ID).Str("requestor", status.Requestor).Msg("deleting VM")
+
+		req := rt.compute.Instances.Delete(rt.projectID, rt.zone, status.VMName)
+		_, err := req.Do()
+		if err != nil {
+			log.Error().Err(err).Str("id", status.ID).Str("vm-name", status.VMName).Msg("deleting VM")
+			status.Error = "Failed to delete VM " + status.VMName
+			return
+		}
+
+		// remove the VM from the list
+		rt.lock.Lock()
+		rt.vmCount--
+		rt.lock.Unlock()
+
+		http.Redirect(w, r, "/reset", http.StatusFound)
+		return
+	}
+	writeHtml(w,
+		`<form action="/delete" method="post">
+			<header>
+				<h2>Delete VM?</h2>
+				<p>Are you sure you want to delete your VM? You will lose any work that you haven't copied off it already.</p>
+			</header>
+			<button type="submit">Delete</button>
+			<input type="button" name="cancel" value="cancel" onClick="window.location.href='/';" />
+		</form>`,
+		nil,
+	)
+}
+
+// start provisioning if we haven't already, and redirect to /
+func (rt *Runtime) handleProvision(w http.ResponseWriter, r *http.Request) {
+	status, ok := rt.getStatus(nil, w, r)
+	if !ok {
+		return
+	}
+
+	requestor := strings.TrimSpace(r.FormValue("requestor"))
+	if len(requestor) == 0 {
+		http.Error(w, "you must enter a name", http.StatusBadRequest)
+		return
+	}
+	if len(requestor) > requestorNameLengthLimit {
+		requestor = requestor[:requestorNameLengthLimit]
+	}
+	status.Requestor = requestor
+
+	if status.VMName != "" {
+		log.Warn().Str("id", status.ID).Str("requestor", requestor).Msg("/provision visited by user that is already provisioning")
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
+
+	rt.provision(status)
+	rt.saveStatus(nil, status, w, r)
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+// save the status to the cookie
+// if session is nil, get it from the request
+func (rt *Runtime) saveStatus(session *sessions.Session, status *Status, w http.ResponseWriter, r *http.Request) {
+	if session == nil {
+		var err error
+		session, err = rt.cs.Get(r, sessionName)
+		if err != nil {
+			log.Error().Err(err).Msg("saveStatus reading cookie")
+			http.Error(w, "error reading cookie", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	session.Values[sessionVM] = status.VMName
+	session.Values[sessionStart] = status.ProvisionStart
+	session.Values[sessionRequestor] = status.Requestor
+	session.Values[sessionError] = status.Error
+	err := session.Save(r, w)
+	if err != nil {
+		log.Error().Err(err).Str("id", status.ID).Msg("whilst saving VMName to session")
+	}
+}
+
+func randomString(n int) string {
+	var set = []rune("abcdefghkmnopqrstuvwxyz0123456789")
+
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = set[insecureRand.Intn(len(set))] // nolint: gosec // this doesn't need to be unpredictable
+	}
+	return string(b)
+}
+
+// Start VM creation,
+// updates status with relevant details
+// updates runtime with VM count if successful
+func (rt *Runtime) provision(status *Status) {
+	log.Info().Str("id", status.ID).Str("requestor", status.Requestor).Msg("Started provisioning")
+	status.ProvisionStart = time.Now()
+
+	if rt.maxVMs > 0 && rt.vmCount >= rt.maxVMs {
+		log.Warn().Int("num-vms", rt.vmCount).Int("limit", rt.maxVMs).Str("id", status.ID).Msg("Hit VM limit")
+		status.Error = "VM limit hit, cannot provision additional VMs."
+		return
+	}
+
+	status.VMName = instanceNamePrefix + randomString(instanceNameSuffixLen)
+
+	ins := rt.compute.Instances.Insert(rt.projectID, rt.zone, &compute.Instance{
+		Name:            status.VMName,
+		ServiceAccounts: []*compute.ServiceAccount{},
+		Zone:            rt.zone,
+		// Metadata: can't alter this, as we have to use the template's metadata set via gcloud. GCP Compute doesn't have a REST api method for running containers
+	})
+	ins.SourceInstanceTemplate(rt.sourceInstanceTemplate)
+	_, err := ins.Do()
+	if err != nil {
+		log.Error().Err(err).Str("id", status.ID).Str("requestor", status.Requestor).Msg("creating instance")
+		status.Error = createError + status.ID
+		return
+	}
+	log.Info().Str("id", status.ID).Str("requestor", status.Requestor).Str("vm-name", status.VMName).Msg("created instance")
+
+	rt.lock.Lock()
+	rt.vmCount++
+	rt.lock.Unlock()
 }
 
 func main() {
@@ -505,19 +518,20 @@ func main() {
 	zerolog.LevelFieldName = "severity"
 	zerolog.TimestampFieldName = "timestamp"
 
-	log.Logger = log.With().Timestamp().Logger()
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	debug := os.Getenv("DEBUG")
 	if debug == "1" {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
 
+	// So we can save times in cookies
+	gob.Register(time.Time{})
+
 	// for VM names
 	insecureRand.Seed(time.Now().UnixNano())
 
 	rt := Runtime{
-		lock:     &sync.Mutex{},
-		sessions: make(map[string]*Status),
+		lock: &sync.Mutex{},
 	}
 
 	port := os.Getenv("PORT")
@@ -555,7 +569,7 @@ func main() {
 	rt.cs = sessions.NewCookieStore(authKey)
 	rt.cs.Options.HttpOnly = true
 	rt.cs.Options.SameSite = http.SameSiteLaxMode
-	rt.cs.Options.Secure = false // so we can test it locally
+	rt.cs.Options.Secure = os.Getenv("INSECURE_COOKIE") != "1"
 
 	maxVMsStr := os.Getenv("VMLIMIT")
 	if maxVMsStr != "" {
