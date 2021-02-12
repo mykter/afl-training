@@ -50,5 +50,6 @@ A dictionary with these keys in is included in this repo as `ntpq.dict`. Use it 
 
     afl-fuzz -i in -o out -x ntpq.dict ntp-4.2.8p8/ntpq/ntpq
 
-With the help of this dictionary you'll see the number of paths found shoot up. Whilst working on this challenge, I
-found and reported a new vulnerability in 4.2.8p10 using this approach, CVE-2018-7183.
+With the help of this dictionary you'll see the number of paths found shoot up. Some issues have been found in 4.2.8p10
+using this approach that have been reported but not fixed at the time of writing - if in doubt, contact
+security@ntp.org.
