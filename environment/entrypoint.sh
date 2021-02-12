@@ -47,8 +47,9 @@ fi
 echo "stty -ixon" >> /etc/profile # don't treat ctrl+s as scrolllock
 
 if [[ -n "$SYSTEMCONFIG" ]]; then
+    set +e # some aspects of this will often fail; best-efforts is fine for a learning environment
     /home/fuzzer/AFLplusplus/afl-system-config
 fi
 
-echo "Spawning SSHd"
-/usr/sbin/sshd -D -p ${SSHPORT-22}
+echo "Spawning SSHd on port ${SSHPORT-2222}"
+/usr/sbin/sshd -D -p ${SSHPORT-2222}
