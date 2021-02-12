@@ -20,8 +20,8 @@ I recommend you experiment with persistent mode and/or a multicore setup for thi
 For multicore read afl's docs/parallel_fuzzing.txt for fairly straightforward instructions on single-system fuzzing. Get
 a main and 3 secondaries running to slash the time it takes to solve this challenge.
 
-For persistent mode read afl's llvm_mode/README.persistent_mode.md (under Bonus features). There are some gotchas with
-this target! See HINTS.md
+For persistent mode read `AFLplusplus/instrumentation/README.persistent_mode.md`. There are some gotchas with this
+target! See HINTS.md
 
 For hints on fuzzing, see HINTS. If you get your fuzzer running without needing the hints, read the HINTS file whilst
 watching the UI for some dicussion on seed file selection. Also check out docs/status_screen.txt.

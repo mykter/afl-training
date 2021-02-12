@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y \
     rsync autopoint bison gperf autoconf texinfo gettext \
     libtool pkg-config libz-dev python2.7-dev \
     awscli openssh-server ncat \
-    emacs vim nano screen htop man manpages-posix-dev wget httpie bash-completion \
+    emacs vim nano screen htop man manpages-posix-dev wget httpie bash-completion ripgrep \
     gdb byobu \
     && rm -rf /var/lib/apt/lists
 
@@ -50,10 +50,11 @@ RUN update-alternatives --install /usr/bin/clang clang $(which clang-11) 1 && \
     update-alternatives --install /usr/bin/clang++ clang++ $(which clang++-11) 1 && \
     update-alternatives --install /usr/bin/llvm-config llvm-config $(which llvm-config-11) 1 && \
     update-alternatives --install /usr/bin/llvm-symbolizer llvm-symbolizer $(which llvm-symbolizer-11) 1 && \
-    update-alternatives --install /usr/bin/llvm-cov llvm-cov $(which llvm-cov-11) 1
+    update-alternatives --install /usr/bin/llvm-cov llvm-cov $(which llvm-cov-11) 1 \
+    update-alternatives --install /usr/bin/llvm-profdata llvm-profdata $(which llvm-profdata-11) 1
 
 # (environment variables won't be visible in the SSH session unless added to /etc/profile or similar)
-ENV AFLVERSION=2.68c
+ENV AFLVERSION=3.0c
 USER fuzzer
 WORKDIR /home/fuzzer
 RUN git clone https://github.com/AFLplusplus/AFLplusplus
@@ -77,6 +78,7 @@ RUN git clone https://github.com/mykter/afl-training.git workshop
 
 WORKDIR /home/fuzzer/workshop
 RUN http https://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/ntp-4.2.2.tar.gz | tar xz -C challenges/ntpq
+RUN http https://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/ntp-4.2.8p10.tar.gz | tar xz -C challenges/ntpq
 RUN git submodule init && git submodule update
 
 # By default run an SSH daemon. To run locally instead, use something like this:
