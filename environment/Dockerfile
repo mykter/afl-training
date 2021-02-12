@@ -50,7 +50,7 @@ RUN update-alternatives --install /usr/bin/clang clang $(which clang-11) 1 && \
     update-alternatives --install /usr/bin/clang++ clang++ $(which clang++-11) 1 && \
     update-alternatives --install /usr/bin/llvm-config llvm-config $(which llvm-config-11) 1 && \
     update-alternatives --install /usr/bin/llvm-symbolizer llvm-symbolizer $(which llvm-symbolizer-11) 1 && \
-    update-alternatives --install /usr/bin/llvm-cov llvm-cov $(which llvm-cov-11) 1 \
+    update-alternatives --install /usr/bin/llvm-cov llvm-cov $(which llvm-cov-11) 1 && \
     update-alternatives --install /usr/bin/llvm-profdata llvm-profdata $(which llvm-profdata-11) 1
 
 # (environment variables won't be visible in the SSH session unless added to /etc/profile or similar)

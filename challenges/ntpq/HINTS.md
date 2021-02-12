@@ -21,7 +21,25 @@ may not - it depends how lucky your run is. If you've found it, continue with th
 you haven't, continue with these instructions on ntp-4.2.2.
 
 After running afl-fuzz for a while, you can check what coverage of `cookedprint` you've got. There are various options,
-here is how to use clang's gcov-compatible coverage tool:
+two are described below.
+
+You will likely see that some notable parts of the cookedprint function have not been touched by your fuzzing run. afl
+has a feature that will allow you to easily reach these unexplored areas - answers in ANSWERS.md!
+
+### llvm source-based
+
+Ref https://clang.llvm.org/docs/SourceBasedCodeCoverage.html
+
+- Compile with `CC=clang CFLAGS="-fprofile-instr-generate -fcoverage-mapping -g -O0" ./configure && make -C ntpq`
+- From within the ntpq directory, collect coverage data:
+  `for F in corpus/* ; do LLVM_PROFILE_FILE="cov/%p.profraw" ./ntpq < $F; done`
+- Compile it into a usable form: `llvm-profdata-11 merge -sparse cov -o ntpq.profdata`
+- View the results: `llvm-cov show ./ntpq -instr-profile=ntpq.profdata ntpq.c --use-color | less -R` (-R tells less to
+  show colors)
+
+### llvm gcov
+
+clang's has a gcov-compatible coverage tool.
 
 - Compile with `CC=clang CFLAGS="--coverage -g -O0" ./configure && make -C ntpq` (run `make distclean` first to be safe;
   ntpd has some problems compiling, so be sure to just compile ntpq)
@@ -33,6 +51,4 @@ here is how to use clang's gcov-compatible coverage tool:
 - Compile all the coverage data into a gcov report: `cd ./ntp-4.2.8p10/ntpq/ && llvm-cov gcov ntpq.c`
 - Open the report (`./ntp-4.2.8p10/ntpq/ntpq.c.gcov`) in a text editor, and look at what parts of the file, and
   cookedprint in particular, aren't covered. From the gcov manpage: "The execution_count is '-' for lines containing no
-  code. Unexecuted lines are marked #####"
-
-afl has a feature that will allow you to easily reach these unexplored areas - answers in ANSWERS.md!
+  code. Unexecuted lines are marked #####".

@@ -51,6 +51,7 @@ host's.
                 --container-privileged \
                 --container-env PASSMETHOD=<see below>,SSHPORT=2222,SYSTEMCONFIG=1 \
                 --machine-type n2-standard-4 \
+                --boot-disk-size 15GB \
                 --region us-central1 \
                 --network fuzz-training --subnet main \
                 --no-service-account --no-scopes \
