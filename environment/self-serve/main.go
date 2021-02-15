@@ -81,11 +81,18 @@ const sessionError = "error"
 func writeHtml(w io.Writer, main string, data interface{}) {
 	err := template.Must(template.New("html").Parse(`
 		{{define "main"}}`+main+`{{end}}
+		{{- define "copy" -}}
+			{{- if . | len | eq 0 }}
+				{{- . }}
+			{{- else }}
+				{{- . }} <a href='#' onclick="navigator.clipboard.writeText({{.}});"><small>📋</small></a>
+			{{- end }}
+		{{- end}}
 		{{define "machineDetails"}}
 			<p><table>
-				<tr><td>IP Address</td> <td>{{.Status.IP}}</td></tr>
+				<tr><td>IP Address</td> <td>{{template "copy" .Status.IP}}</td></tr>
 				<tr><td>Username</td> <td>`+username+`</td></tr>
-				<tr><td>Password</td> <td>{{.Status.Password}}</td></tr>
+				<tr><td>Password</td> <td>{{template "copy" .Status.Password}}</td></tr>
 				<tr><td>Port</td> <td>`+fmt.Sprint(sshPort)+`</td></tr>
 				<tr><td>ID</td> <td>{{.Status.VMName}}</td></tr>
 			</table></p>
@@ -341,7 +348,7 @@ func (rt *Runtime) handleRoot(w http.ResponseWriter, r *http.Request) {
 		writeHtml(w, `<p>Success! Your machine details: </p>
 			{{template "machineDetails" .}}
 			{{template "ssh" .}}
-			<p>Please <a href="/delete">delete</a> your machine when you're finished.<p>`,
+			<p>Please <a href="/delete">delete 🗑️</a> your machine when you're finished.<p>`,
 			struct{ Status *Status }{status},
 		)
 	}
