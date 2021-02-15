@@ -21,6 +21,6 @@ dictionary (or a starting set of input files that contain all of the keywords). 
 code review instead of fuzzing.
 
 An interesting one to put into afl-analyse to see what it notices about the file format - it correctly annotates much of
-it, but misses on a few. `afl-analyze -i sample.input -m none ./cromu_00007`
+it, but misses on a few. `afl-analyze -i sample.input ./cromu_00007`
 
 \* unless I introduced more in porting to Linux

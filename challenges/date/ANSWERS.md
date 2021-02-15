@@ -12,10 +12,10 @@ From the options in HINTS:
 
 1.  This could work, but involves some potentially messy digging around in the code. Are you _sure_ you got every
     instance? Does your code work if it's retrieved multiple times?
-2.  In afl's examples/bash_shellshock directory there is a trivial patch for bash that uses this approach. It isn't very
-    bash-specific, so is easily adapted to this scenario. This is the simplest and most robust method, so probably the
-    most suitable for this task. You can insert the same code at the start of `src/date.c`'s main function, but change
-    the env var it is setting to TZ.
+2.  In afl's utils/bash_shellshock directory there is a trivial patch for bash that uses this approach. It isn't
+    bash-specific - you just make a call to `setenv` - so is easily adapted to this scenario. This is the simplest and
+    most robust method, so probably the most suitable for this task. You can insert the same code at the start of
+    `src/date.c`'s main function, but change the env var it is setting to TZ.
 3.  Creating a getenv replacement that is loaded via LD_PRELOAD might be useful work that you could reuse for other
     targets. But it's more effort than you need right now.
 
@@ -34,13 +34,13 @@ is triggered whether or not you specify a timezone in the date - but consider ho
 
 For ASAN fuzzing:
 
-    $ sudo ~/AFLplusplus/examples/asan_cgroups/limit_memory.sh -u fuzzer ~/AFLplusplus/afl-fuzz -m none -i in -o out -- ./coreutils/src/date --date "2017-03-14T15:00-UTC"
+    $ sudo ~/AFLplusplus/utils/asan_cgroups/limit_memory.sh -u fuzzer ~/AFLplusplus/afl-fuzz -i in -o out -- ./coreutils/src/date --date "2017-03-14T15:00-UTC"
 
 Note the format of the date - when called via the `limit_memory.sh` script the quotes get lost - you can either escape
 them or use a date format without spaces.
 
-(If you're having trouble with ASAN, you can try being lazy and just running without cgroups and use "-m none". The
-kernel might start killing off your processes if you hit an OOM condition, but in this instance it will probably be
+(If you're having trouble with ASAN, you can try being lazy and just running without the cgroup-based memory limiter.
+The kernel might start killing off your processes if you hit an OOM condition, but in this instance it will probably be
 ok...)
 
 If your ASAN output in the crash doesn't give line numbers just memory addresses, check you've followed the quickstart

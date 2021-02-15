@@ -30,7 +30,6 @@ $Header: /mnt/leo2/cvs/sabo/hist-040105/sendmail/s3/main.c,v 1.1.1.1 2004/01/05 
 
 */
 
-
 /*
 
 Sendmail Copyright Notice
@@ -55,7 +54,6 @@ $Header: /mnt/leo2/cvs/sabo/hist-040105/sendmail/s3/main.c,v 1.1.1.1 2004/01/05 
 
 */
 
-
 /*
 
 <source>
@@ -65,36 +63,35 @@ $Header: /mnt/leo2/cvs/sabo/hist-040105/sendmail/s3/main.c,v 1.1.1.1 2004/01/05 
 #include "my-sendmail.h"
 #include <assert.h>
 
-int main(int argc, char **argv){
+int main(int argc, char **argv)
+{
 
-  HDR *header;
-  register ENVELOPE *e;
-  FILE *temp;
+     HDR *header;
+     register ENVELOPE *e;
+     FILE *temp;
 
-  assert (argc == 2);
-  temp = fopen (argv[1], "r");
-  assert (temp != NULL);
- 
-  header = (HDR *) malloc(sizeof(struct header));
-  
-  header->h_field = (char *) malloc(sizeof(char) * 100);
-  header->h_field = "Content-Transfer-Encoding";
-  header->h_value = (char *) malloc(sizeof(char) * 100);
-  header->h_value = "quoted-printable";
+     assert(argc == 2);
+     temp = fopen(argv[1], "r");
+     assert(temp != NULL);
 
-  e = (ENVELOPE *) malloc(sizeof(struct envelope));
- 
-  e->e_id = (char *) malloc(sizeof(char) * 50);
-  e->e_id = "First Entry";
+     header = (HDR *)malloc(sizeof(struct header));
 
- 
-  e->e_dfp = temp;
-  mime7to8(header, e);
+     header->h_field = "Content-Transfer-Encoding";
+     header->h_value = "quoted-printable";
+     header->h_link = NULL;
+     header->h_flags = 0;
 
-  fclose(temp);
+     e = (ENVELOPE *)malloc(sizeof(struct envelope));
+     e->e_id = "First Entry";
+     e->e_dfp = temp;
 
-  return 0;
+     mime7to8(header, e);
 
+     fclose(temp);
+     free(e);
+     free(header);
+
+     return 0;
 }
 
 /*
@@ -102,4 +99,3 @@ int main(int argc, char **argv){
 </source>
 
 */
-

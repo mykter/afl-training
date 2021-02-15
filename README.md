@@ -49,13 +49,16 @@ Challenges, roughly in recommended order, with any specific aspects they cover:
 - libxml2 - an ideal target, using ASAN and persistent mode.
 - heartbleed - infamous bug, using ASAN.
 - sendmail/1301 - parallel fuzzing
-- date - fuzzing environment variable input
 - ntpq - fuzzing a network client; coverage analysis and increasing coverage
+- date - fuzzing environment variable input
 - cyber-grand-challenge - an easy vuln and an example of a hard to find vuln using afl
 - sendmail/1305 - persistent mode difficulties
 
 The challenges have HINTS.md and ANSWERS.md files - these contain useful information about fuzzing different targets
 even if you're not going to attempt the challenge.
+
+Most of the challenges also have an ANSWERS-libFuzzer.md file, for if you want to try out using LLVM's libFuzzer. These
+are brief descriptions of the differences for libFuzzer, and should be read alongside the afl docs (.md files).
 
 All of the challenges use real vulnerabilities from open source projects (the CVEs are identified in the descriptions),
 with the exception of the Cyber Grand Challenge extract, which is a synthetic vulnerability.
