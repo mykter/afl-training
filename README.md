@@ -70,7 +70,7 @@ it will take to find a particular bug, just a probability distribution.
 
 # Links
 
-- The afl docs/ directory
+- The afl [docs/](https://github.com/AFLplusplus/AFLplusplus/tree/stable/docs) directory
 - Ben Nagy’s “Finding Bugs in OS X using AFL” [video](https://vimeo.com/129701495)
 - The [afl-users mailing list](https://groups.google.com/forum/#!forum/afl-users)
 - The smart fuzzer revolution (talk on the future of fuzzing): [video](https://www.youtube.com/watch?v=g1E2Ce5cBhI) /
