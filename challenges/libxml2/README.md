@@ -9,11 +9,12 @@ libxml2 is a popular XML library. Libraries like this are perfect for fuzzing, t
 
 This makes it an ideal first target to write a fuzz harness for.
 
+We're going to try and find CVE-2015-8317.
+
 Build and test v2.9.2 with AFL and Address Sanitizer instrumentation by running:
 
 ```shell
-    git submodule init
-    git submodule update
+    git submodule init && git submodule update
     cd libxml2
     CC=afl-clang-fast ./autogen.sh # you could also use afl-clang-lto, which is usally the better choice, but - oddly - in this case it takes longer to find the bug with an lto build.
     AFL_USE_ASAN=1 make -j 4
