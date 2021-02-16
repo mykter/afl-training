@@ -22,8 +22,8 @@ specified filename.
 Both of these approaches are good, but from here on we'll just look at the `xmlReadFile` option for simplicity.
 
 Once you've implemented the harness, compile it (refer back to README.md for the include & linker flags you need with
-libxml2), and then test your `harness` executable by specifying an XML file on the commandline, e.g.
-`./harness ./libxml2/regressions.xml`. There shouldn't be any visible result (unless you added some kind of output to
+libxml2), and then test your `fuzzer` executable by specifying an XML file on the commandline, e.g.
+`./fuzzer ./libxml2/regressions.xml`. There shouldn't be any visible result (unless you added some kind of output to
 your harness). We're now ready to fuzz in the usual manner for an ASAN-instrumented binary; here's a reminder of how to
 do it for the file-argument approach:
 

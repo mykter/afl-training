@@ -3,7 +3,7 @@ would provide the fuzzer with a comprehensive set of tokens that have special me
 
 Happily AFL ships with a ready made XML dictionary, so we can use that:
 
-    afl-fuzz -i in -o out -x ~/AFLplusplus/dictionaries/xml.dict ./harness @@
+    afl-fuzz -i in -o out -x ~/AFLplusplus/dictionaries/xml.dict ./fuzzer @@
 
 You should see the numbers of paths found grow much faster using this approach. Crucially, we'll also uncover a bug that
 would never be found without it.
