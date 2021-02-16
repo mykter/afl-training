@@ -15,7 +15,7 @@ int process(char *input)
 		char *rest;
 		len = strtol(input + 2, &rest, 10); // how many characters of the string to upper-case
 		rest += 1;							// skip the first char (should be a space)
-		out = malloc(len + strlen(input));  // could be shorter, but play it safe
+		out = malloc(len + strlen(input));	// could be shorter, but play it safe
 		if (len > (int)strlen(input))
 		{
 			printf("Specified length %d was larger than the input!\n", len);
@@ -28,7 +28,12 @@ int process(char *input)
 		}
 		for (int i = 0; i != len; i++)
 		{
-			out[i] = rest[i] - 32; // only handles ASCII
+			char c = rest[i];
+			if (c > 96 && c < 123) // ascii a-z
+			{
+				c -= 32;
+			}
+			out[i] = c;
 		}
 		out[len] = 0;
 		strcat(out, rest + len); // append the remaining text
