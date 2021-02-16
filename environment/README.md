@@ -109,17 +109,16 @@ metadata), and then deploy a Cloud Run service:
 
         $ cd self-serve && docker build . -t gcr.io/<myproj>/fuzz-training-provisioner && docker push gcr.io/<myproj>/fuzz-training-provisioner
         $ export KEY=$(head -c 32 /dev/urandom | base64)
-        $ gcloud beta run deploy fuzz-training-provisioner --image=gcr.io/myproj/fuzz-training-provisioner \
-                --allow-unauthenticated --max-instances=1 --min-instances=1 \
+        $ gcloud run deploy fuzz-training-provisioner --image=gcr.io/myproj/fuzz-training-provisioner \
+                --allow-unauthenticated --max-instances=1 \
                 --set-env-vars=PROJECT=my-gcp-proj,ZONE=us-central1-a,TEMPL=fuzz-training,COOKIE_KEY=${KEY},VMLIMIT=100,DEBUG=0 \
                 --service-account=<self-serve-account-id>
 
 Point your students at the URL the service is deployed to, and they will be able to create a VM and get the credentials
-for it. They can also delete their VM when they've finished with it.
+for it. They can also delete their VM when they've finished with it. Note the VMLIMIT applies to all of the compute
+instances in the specified zone - if you have existing instances they are counted against the limit.
 
-Note the use of --min-instances - it's a bit of a hacky implementation with only in-memory state; to properly enforce
-the VM limit, exactly one instance must run at all times. Because of this, don't forget to delete the service when
-you're done: it won't scale to zero!
+Don't forget to delete the service when you're done: it offers free compute to anyone who can find the URL!
 
         $ gcloud run services delete fuzz-training-provisioner
 

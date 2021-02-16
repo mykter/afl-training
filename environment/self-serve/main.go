@@ -11,8 +11,7 @@ This package implements the following HTTP endpoints and behaviour:
 	POST /provision with cookie, provisioning not started -> provision, set cookie requested, redirect /
 	any other request to /provision -> redirect to /
 
-State is maintained primarily in cookies.
-If you want to enforce a limit on the number of VMs, exactly one instance of this server should run at all times, as the count is only maintained in memory.
+State is maintained entirely in cookies.
 */
 
 import (
@@ -28,7 +27,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gorilla/sessions"
@@ -57,9 +55,6 @@ type Runtime struct {
 	zone                   string
 	sourceInstanceTemplate string
 	projectID              string
-
-	lock    *sync.Mutex
-	vmCount int
 }
 
 const sessionName = "state"
@@ -98,7 +93,17 @@ func writeHtml(w io.Writer, main string, data interface{}) {
 			</table></p>
 		{{end}}
 		{{define "ssh"}}
-				<p><code>ssh `+username+`@{{.Status.IP}} -p `+fmt.Sprint(sshPort)+`</code></p>
+			<p><code>ssh `+username+`@{{.Status.IP}} -p `+fmt.Sprint(sshPort)+`</code></p>
+			<details>
+                <summary>SSH config file entry</summary>
+                <p>Add this to your ~/.ssh/config file to simplify access, especially helpful if using VSCode Remote:<p>
+				<p><pre><code>Host fuzz-training
+  HostName {{.Status.IP}}
+  User `+username+`
+  Port `+fmt.Sprint(sshPort)+`
+</code></pre></p>
+				<p>Now you can simply do <code>ssh fuzz-training</code></p>
+            </details>
 		{{end}}
 
 		<head>
@@ -403,11 +408,6 @@ func (rt *Runtime) handleDelete(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// remove the VM from the list
-		rt.lock.Lock()
-		rt.vmCount--
-		rt.lock.Unlock()
-
 		http.Redirect(w, r, "/reset", http.StatusFound)
 		return
 	}
@@ -492,10 +492,19 @@ func (rt *Runtime) provision(status *Status) {
 	log.Info().Str("id", status.ID).Str("requestor", status.Requestor).Msg("Started provisioning")
 	status.ProvisionStart = time.Now()
 
-	if rt.maxVMs > 0 && rt.vmCount >= rt.maxVMs {
-		log.Warn().Int("num-vms", rt.vmCount).Int("limit", rt.maxVMs).Str("id", status.ID).Msg("Hit VM limit")
-		status.Error = "VM limit hit, cannot provision additional VMs."
-		return
+	if rt.maxVMs > 0 { // a vmlimit is in force
+		instances, err := rt.compute.Instances.List(rt.projectID, rt.zone).MaxResults(500).Do()
+		if err != nil {
+			log.Error().Err(err).Str("id", status.ID).Str("requestor", status.Requestor).Msg("listing instances")
+			status.Error = createError + status.ID
+			return
+		}
+		if len(instances.Items) >= rt.maxVMs {
+			log.Warn().Int("num-vms", len(instances.Items)).Int("limit", rt.maxVMs).Str("id", status.ID).Msg("Hit VM limit")
+			status.Error = "VM limit hit, cannot provision additional VMs."
+			return
+		}
+		log.Debug().Int("num-vms", len(instances.Items)).Str("id", status.ID).Msg("counted instances")
 	}
 
 	status.VMName = instanceNamePrefix + randomString(instanceNameSuffixLen)
@@ -514,10 +523,6 @@ func (rt *Runtime) provision(status *Status) {
 		return
 	}
 	log.Info().Str("id", status.ID).Str("requestor", status.Requestor).Str("vm-name", status.VMName).Msg("created instance")
-
-	rt.lock.Lock()
-	rt.vmCount++
-	rt.lock.Unlock()
 }
 
 func main() {
@@ -537,18 +542,16 @@ func main() {
 	// for VM names
 	insecureRand.Seed(time.Now().UnixNano())
 
-	rt := Runtime{
-		lock: &sync.Mutex{},
-	}
-
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "80"
 	}
 
+	rt := Runtime{}
+
 	rt.zone = os.Getenv("ZONE")
 	if rt.zone == "" {
-		rt.zone = "us-central1-a"
+		rt.zone = "us-east1-b"
 	}
 
 	rt.projectID = os.Getenv("PROJECT")
@@ -581,8 +584,8 @@ func main() {
 	maxVMsStr := os.Getenv("VMLIMIT")
 	if maxVMsStr != "" {
 		maxVMs, err := strconv.Atoi(maxVMsStr)
-		if err != nil || maxVMs < 0 {
-			log.Fatal().Err(err).Msg("VMLIMIT environment variable must be a non-negative integer. 0 = no limit")
+		if err != nil || maxVMs < 0 || maxVMs > 500 { // 500 is the maximum number of instances the GCP API will return without having to deal with paging
+			log.Fatal().Err(err).Msg("VMLIMIT environment variable must be an integer between 0 and 500. 0 = no limit")
 		}
 		rt.maxVMs = maxVMs
 	}
