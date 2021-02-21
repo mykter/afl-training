@@ -1,14 +1,16 @@
-This Dockerfile produces a docker image set up ready for the training. It is available at
-[ghcr.io/mykter/fuzz-training](http://ghcr.io/mykter/fuzz-training).
+This Dockerfile produces a docker image set up ready for the training.
 
 # Building
+
+Optional, as the image is available at
+[ghcr.io/mykter/fuzz-training](http://ghcr.io/mykter/fuzz-training).
 
     $ docker build . -t fuzz-training
 
 # Running Locally
 
-    $ docker run --privileged -p 22000:22 -e PASSMETHOD=env -e PASS=<password> fuzz-training
-    $ ssh fuzzer@localhost -p 22000
+    $ docker run --privileged -p 2222:2222 -e PASSMETHOD=env -e PASS=<password> ghcr.io/mykter/fuzz-training
+    $ ssh fuzzer@localhost -p 2222
 
 You need to use a privileged container to use the `asan_cgroups/limit_memory.sh` script and to use debuggers like gdb.
 
