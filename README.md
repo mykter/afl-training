@@ -12,7 +12,7 @@ The first public version of this workshop was presented at SteelCon 2017 and it 
 # Presentation
 
 Via
-[Google slides](https://docs.google.com/presentation/d/e/2PACX-1vQWx9bCm_WzSec1Okd8PM2vOf2TQRoM4snxsHSHSLWMfgSWzcJHxWkkdhRPw-a7Flq_5X2QpGI8vwUH/pub?start=false&loop=false&delayms=60000)
+[Google slides](https://docs.google.com/presentation/d/1Ap3eUIo4RrI_9GAGfn2Q0RKtBPNmGhI1DZlivdcFKPo)
 and [as a PDF](https://github.com/mykter/afl-training/files/5454345/Fuzzing.with.AFL.-.GrayHat.2020.pdf). There is extra
 information in the speaker notes.
 
